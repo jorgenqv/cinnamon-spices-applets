@@ -7,7 +7,7 @@ function importModule(path: string): any {
       if (!AppletDir) var AppletDir = imports.ui.appletManager.applets['weather@mockturtl'];
       return AppletDir[path];
     }
-  }
+}
 
 var utils = importModule("utils");
 var isCoordinate = utils.isCoordinate as (text: any) => boolean;
@@ -112,7 +112,7 @@ class DarkSky implements WeatherProvider {
                     customIcon: this.ResolveCustomIcon(json.currently.icon)
                 },
                 extra_field: {
-                    name: _("Feels Like:"),
+                    name: _("Feels Like"),
                     value: this.ToKelvin(json.currently.apparentTemperature),
                     type: "temperature"
                 },
