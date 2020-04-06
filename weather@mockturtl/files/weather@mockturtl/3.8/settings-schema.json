@@ -26,7 +26,7 @@
   },
   "WB":
   { "type": "label"
-  , "description": "WeatherBit - Minimum of 10min refresh rate is recommended or you might exceed you daily quota. Needs a key, please click on 'Setup API Key and Location' for the steps how to obtain one."
+  , "description": "WeatherBit - At least 10 minutes as refresh rate is recommended, since otherwise you might exceed you daily quota."
   },
   "providerSettings":
   { "type": "header"
@@ -84,7 +84,7 @@
   { "type": "spinbutton"
   , "default": 2
   , "min": 2
-  , "max": 5
+  , "max": 7
   , "units": "days"
   , "step": 1
   , "description": "Forecast length"
@@ -110,7 +110,8 @@
     { "kph": "kph"
     , "mph": "mph"
     , "m/s": "m/s"
-    , "knots": "Knots"
+    , "knots": "Knots",
+      "Beaufort": "Beaufort"
     }
   },
   "pressureUnit":
@@ -135,17 +136,23 @@
   { "type": "checkbox"
   , "default": true
   , "description": "Display current temperature in panel"
-  }
-, "showCommentInPanel":
+  },
+  "showCommentInPanel":
   { "type": "checkbox"
   , "default": true
   , "description": "Show the weather condition (e.g., \"Windy\", \"Clear\") in the panel",
     "tooltip": "Only works with horizontal panels"
   },
+  "tempTextOverride":
+  { "type": "entry"
+  , "default": ""
+  , "description": "Override label on panel"
+  , "tooltip": "Available values are: {c} is condition, {t} is temperature and {u} is unit.\nCan be used if label does not fit on vertical panel, among other smart things."
+  },
   "useCustomAppletIcons":
   { "type": "checkbox"
   , "default": false
-  , "tootlip": "Uses a slightly modified version of Climaicons"
+  , "tootlip": "Iconset is weather-icons by Erik Flowers"
   , "description": "Use custom icons on the panel"
   },
   "displaySettings":
@@ -171,6 +178,11 @@
   { "type": "checkbox"
   , "default": false
   , "description": "Show high temperature first in forecast"
+  },
+  "tempRussianStyle":
+  { "type": "checkbox"
+  , "default": false
+  , "description": "Show temperature Russian style"
   }
   , "locationLabelOverride":
   { "type": "entry"
@@ -200,6 +212,12 @@
   { "type": "checkbox"
   , "default": false
   , "description": "Use symbolic icons in the applet"
+  },
+  "useCustomMenuIcons":
+  { "type": "checkbox"
+  , "default": false
+  , "description": "Use custom icons in the popup menu",
+    "tooltip": "Iconset is weather-icons by Erik Flowers"
   },
   "credits": {
     "type": "header",

@@ -53,9 +53,9 @@ var weatherIconSafely = utils.weatherIconSafely;
 var get = utils.get;
 var OpenWeatherMap = (function () {
     function OpenWeatherMap(_app) {
-        this.supportedLanguages = ["ar", "bg", "ca", "cz", "de", "el", "en", "fa", "fi",
-            "fr", "gl", "hr", "hu", "it", "ja", "kr", "la", "lt", "mk", "nl", "pl",
-            "pt", "ro", "ru", "se", "sk", "sl", "es", "tr", "ua", "vi", "zh_cn", "zh_tw"];
+        this.supportedLanguages = ["af", "ar", "az", "bg", "ca", "cz", "da", "de", "el", "en", "eu", "fa", "fi",
+            "fr", "gl", "he", "hi", "hr", "hu", "id", "it", "ja", "kr", "la", "lt", "mk", "no", "nl", "pl",
+            "pt", "pt_br", "ro", "ru", "se", "sk", "sl", "sp", "es", "sr", "th", "tr", "ua", "uk", "vi", "zh_cn", "zh_tw", "zu"];
         this.current_url = "https://api.openweathermap.org/data/2.5/weather?";
         this.daily_url = "https://api.openweathermap.org/data/2.5/forecast/daily?";
         this.app = _app;
@@ -143,7 +143,7 @@ var OpenWeatherMap = (function () {
                 condition: {
                     main: get(["weather", "0", "main"], json),
                     description: get(["weather", "0", "description"], json),
-                    icon: weatherIconSafely(self.ResolveIcon(get(["weather", "0", "icon"], json)), self.app._icon_type),
+                    icon: weatherIconSafely(self.ResolveIcon(get(["weather", "0", "icon"], json)), self.app.config.IconType()),
                     customIcon: self.ResolveCustomIcon(get(["weather", "0", "icon"], json))
                 },
                 extra_field: {
@@ -165,7 +165,7 @@ var OpenWeatherMap = (function () {
     OpenWeatherMap.prototype.ParseForecast = function (json, self) {
         var forecasts = [];
         try {
-            for (var i = 0; i < self.app._forecastDays; i++) {
+            for (var i = 0; i < self.app.config._forecastDays; i++) {
                 var day = json.list[i];
                 var forecast = {
                     date: new Date(day.dt * 1000),
@@ -174,7 +174,7 @@ var OpenWeatherMap = (function () {
                     condition: {
                         main: day.weather[0].main,
                         description: day.weather[0].description,
-                        icon: weatherIconSafely(self.ResolveIcon(day.weather[0].icon), self.app._icon_type),
+                        icon: weatherIconSafely(self.ResolveIcon(day.weather[0].icon), self.app.config.IconType()),
                         customIcon: self.ResolveCustomIcon(day.weather[0].icon)
                     },
                 };
@@ -195,8 +195,9 @@ var OpenWeatherMap = (function () {
         if (locString != null) {
             query = query + locString + "&APPID=";
             query += "1c73f8259a86c6fd43c7163b543c8640";
-            if (this.app._translateCondition && isLangSupported(this.app.systemLanguage, this.supportedLanguages)) {
-                query = query + "&lang=" + this.app.systemLanguage;
+            var locale = this.ConvertToAPILocale(this.app.currentLocale);
+            if (this.app.config._translateCondition && isLangSupported(locale, this.supportedLanguages)) {
+                query = query + "&lang=" + locale;
             }
             return query;
         }
@@ -206,7 +207,7 @@ var OpenWeatherMap = (function () {
     };
     ;
     OpenWeatherMap.prototype.ParseLocation = function () {
-        var loc = this.app._location.replace(/ /g, "");
+        var loc = this.app.config._location.replace(/ /g, "");
         if (isCoordinate(loc)) {
             var locArr = loc.split(',');
             return "lat=" + locArr[0] + "&lon=" + locArr[1];
@@ -218,6 +219,28 @@ var OpenWeatherMap = (function () {
             return "q=" + loc;
     };
     ;
+    OpenWeatherMap.prototype.ConvertToAPILocale = function (systemLocale) {
+        if (systemLocale == "zh-cn" || systemLocale == "zh-cn" || systemLocale == "pt-br") {
+            return systemLocale;
+        }
+        var lang = systemLocale.split("-")[0];
+        if (lang == "sv") {
+            return "se";
+        }
+        else if (lang == "cs") {
+            return "cz";
+        }
+        else if (lang == "ko") {
+            return "kr";
+        }
+        else if (lang == "lv") {
+            return "la";
+        }
+        else if (lang == "nn" || lang == "nb") {
+            return "no";
+        }
+        return lang;
+    };
     OpenWeatherMap.prototype.HandleResponseErrors = function (json) {
         var errorMsg = "OpenWeathermap Response: ";
         var error = {
@@ -307,43 +330,43 @@ var OpenWeatherMap = (function () {
     OpenWeatherMap.prototype.ResolveCustomIcon = function (icon) {
         switch (icon) {
             case "10d":
-                return "Cloud-Rain-Sun";
+                return "day-rain-symbolic";
             case "10n":
-                return "Cloud-Rain-Moon";
+                return "night-rain-symbolic";
             case "09n":
-                return "Cloud-Drizzle-Moon";
+                return "night-showers-symbolic";
             case "09d":
-                return "Cloud-Drizzle-Sun";
+                return "day-showers-symbolic";
             case "13d":
-                return "Cloud-Snow-Sun";
+                return "day-snow-symbolic";
             case "13n":
-                return "Cloud-Snow-Moon";
+                return "night-alt-snow-symbolic";
             case "50d":
-                return "Cloud-Fog-Sun-Alt";
+                return "day-fog-symbolic";
             case "50n":
-                return "Cloud-Fog-Moon-Alt";
+                return "night-fog-symbolic";
             case "04d":
-                return "Cloud-Sun";
+                return "day-cloudy-symbolic";
             case "04n":
-                return "Cloud-Moon";
+                return "night-alt-cloudy-symbolic";
             case "03n":
-                return "Cloud-Moon";
+                return "night-alt-cloudy-symbolic";
             case "03d":
-                return "Cloud-Sun";
+                return "day-cloudy-symbolic";
             case "02n":
-                return "Cloud-Moon";
+                return "night-alt-cloudy-symbolic";
             case "02d":
-                return "Cloud-Sun";
+                return "day-cloudy-symbolic";
             case "01n":
-                return "Moon";
+                return "night-clear-symbolic";
             case "01d":
-                return "Sun";
+                return "day-sunny-symbolic";
             case "11d":
-                return "Cloud-Lightning-Sun";
+                return "day-thunderstorm-symbolic";
             case "11n":
-                return "Cloud-Lightning-Moon";
+                return "night-alt-thunderstorm-symbolic";
             default:
-                return "Cloud-Refresh";
+                return "cloud-refresh-symbolic";
         }
     };
     ;

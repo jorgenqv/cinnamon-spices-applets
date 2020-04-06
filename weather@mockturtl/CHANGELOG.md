@@ -1,3 +1,31 @@
+# 2.4.7
+
+* Fixes [#2929](https://github.com/linuxmint/cinnamon-spices-applets/issues/2929)
+* Fix styling issues with forecasts box - There wasn't enough margin on the bottom when the icon's height were bigger than the text, neither when the forecasts were wider than the current weather box.
+
+# 2.4.6
+
+* Fixes [#2907](https://github.com/linuxmint/cinnamon-spices-applets/issues/2907)
+* Update Hungraian translation
+
+# 2.4.5
+
+* Fixes [#618](https://github.com/linuxmint/cinnamon-spices-applets/issues/618)
+* Fixes [#2885](https://github.com/linuxmint/cinnamon-spices-applets/issues/2885)
+* Fixes [#2890](https://github.com/linuxmint/cinnamon-spices-applets/issues/2890)
+* Center Sunrise and Sunset Label, and use icons instead of text.
+* Use weather-icons from [Erik Flowers](https://github.com/erikflowers/weather-icons) instead of Climaicons as it has more icons for conditions.
+* Add Python-JS Yahoo bridge, preparation to add Yahoo back as an option.
+* Add option to use the Custom icon set in the popup menu, not just on the panel.
+* Maximum number of forecasts displayed increased from 5 to 7.
+* Code refactor in preparation for adding Hourly forecasts on middle click (Config, Main Loop and PopupMenu has its own class now)
+* Amend styling to be more consistent across themes
+
+# 2.4.4
+
+* Fixes [#2782](https://github.com/linuxmint/cinnamon-spices-applets/issues/2872)
+* Add ability to override applet label with injecting values (customise and fit text on horizontal and vertical panels as well)
+
 # 2.4.3
 
 * Fixes [#2861](https://github.com/linuxmint/cinnamon-spices-applets/issues/2861)

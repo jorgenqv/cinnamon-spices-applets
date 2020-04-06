@@ -34,6 +34,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var UUID = "weather@mockturtl";
+imports.gettext.bindtextdomain(UUID, imports.gi.GLib.get_home_dir() + "/.local/share/locale");
+function _(str) {
+    return imports.gettext.dgettext(UUID, str);
+}
 var _a = imports.mainloop, timeout_add = _a.timeout_add, source_remove = _a.source_remove;
 var util_format_date = imports.gi.Cinnamon.util_format_date;
 var IconType = imports.gi.St.IconType;
@@ -184,22 +189,68 @@ var get = function (p, o) {
 var MPStoUserUnits = function (mps, units) {
     switch (units) {
         case "mph":
-            return Math.round((mps * WEATHER_CONV_MPH_IN_MPS) * 10) / 10;
+            return (Math.round((mps * WEATHER_CONV_MPH_IN_MPS) * 10) / 10).toString();
         case "kph":
-            return Math.round((mps * WEATHER_CONV_KPH_IN_MPS) * 10) / 10;
+            return (Math.round((mps * WEATHER_CONV_KPH_IN_MPS) * 10) / 10).toString();
         case "m/s":
-            return Math.round(mps * 10) / 10;
+            return (Math.round(mps * 10) / 10).toString();
         case "Knots":
-            return Math.round(mps * WEATHER_CONV_KNOTS_IN_MPS);
+            return Math.round(mps * WEATHER_CONV_KNOTS_IN_MPS).toString();
+        case "Beaufort":
+            if (mps < 0.5) {
+                return "0 (" + _("Calm") + ")";
+            }
+            if (mps < 1.5) {
+                return "1 (" + _("Light air") + ")";
+            }
+            if (mps < 3.3) {
+                return "2 (" + _("Light breeze") + ")";
+            }
+            if (mps < 5.5) {
+                return "3 (" + _("Gentle breeze") + ")";
+            }
+            if (mps < 7.9) {
+                return "4 (" + _("Moderate breeze") + ")";
+            }
+            if (mps < 10.7) {
+                return "5 (" + _("Fresh breeze") + ")";
+            }
+            if (mps < 13.8) {
+                return "6 (" + _("Strong breeze") + ")";
+            }
+            if (mps < 17.1) {
+                return "7 (" + _("Near gale") + ")";
+            }
+            if (mps < 20.7) {
+                return "8 (" + _("Gale") + ")";
+            }
+            if (mps < 24.4) {
+                return "9 (" + _("Strong gale") + ")";
+            }
+            if (mps < 28.4) {
+                return "10 (" + _("Storm") + ")";
+            }
+            if (mps < 32.6) {
+                return "11 (" + _("Violent storm") + ")";
+            }
+            return "12 (" + _("Hurricane") + ")";
     }
 };
-var TempToUserUnits = function (kelvin, units) {
+var TempToUserConfig = function (kelvin, units, russianStyle) {
+    var temp;
     if (units == "celsius") {
-        return Math.round((kelvin - 273.15));
+        temp = Math.round((kelvin - 273.15));
     }
     if (units == "fahrenheit") {
-        return Math.round((9 / 5 * (kelvin - 273.15) + 32));
+        temp = Math.round((9 / 5 * (kelvin - 273.15) + 32));
     }
+    if (!russianStyle)
+        return temp.toString();
+    if (temp < 0)
+        temp = "−" + Math.abs(temp).toString();
+    else if (temp > 0)
+        temp = "+" + temp.toString();
+    return temp.toString();
 };
 var CelsiusToKelvin = function (celsius) {
     return (celsius + 273.15);
