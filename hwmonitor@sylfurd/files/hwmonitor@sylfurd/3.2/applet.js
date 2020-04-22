@@ -96,6 +96,7 @@ GraphicalHWMonitorApplet.prototype = {
         this.settings = new Settings.AppletSettings(this, metadata.uuid, instance_id);
         // General settings
         this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "frequency", "frequency", this.settingsChanged, null);
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "graph_line_mode", "graph_line_mode", this.settingsChanged, null);
         
         this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "theme", "theme", this.settingsChanged, null);
         this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "border_color", "border_color", this.settingsChanged, null);
@@ -155,6 +156,12 @@ GraphicalHWMonitorApplet.prototype = {
         this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "diskwrite_use_custom_label", "diskwrite_use_custom_label", this.settingsChanged, null);
         this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "diskwrite_custom_label", "diskwrite_custom_label", this.settingsChanged, null);
         this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "diskwrite_show_detail_label", "diskwrite_show_detail_label", this.settingsChanged, null);
+        // BAT (battery) settings
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "bat_enable_graph", "bat_enable_graph", this.settingsChanged, null);
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "bat_size", "bat_size", this.settingsChanged, null);
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "bat_use_custom_label", "bat_use_custom_label", this.settingsChanged, null);
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "bat_custom_label", "bat_custom_label", this.settingsChanged, null);
+        this.settings.bindProperty(Settings.BindingDirection.BIDIRECTIONAL, "bat_show_detail_label", "bat_show_detail_label", this.settingsChanged, null);
         
         this.createThemeObject();
 
@@ -242,6 +249,18 @@ GraphicalHWMonitorApplet.prototype = {
 
             let diskWriteProvider =  new Providers.DiskDataProvider(this.frequency, false, this.diskwrite_mount_dir);
             this.graphs.push(new Graph.Graph(diskWriteProvider, diskWriteGraphArea, this.theme_object, this.diskwrite_show_detail_label));
+        }    
+
+        // Add BAT Graph
+        if (this.bat_enable_graph) { 
+            let batGraphArea = null;
+            if (this.isHorizontal)
+                batGraphArea = this.appletArea.addGraph(this.bat_size, this.panel_height);
+            else
+                batGraphArea = this.appletArea.addGraph(this.panel_height, this.bat_size);
+
+            let batProvider =  new Providers.BatteryProvider();
+            this.graphs.push(new Graph.Graph(batProvider, batGraphArea, this.theme_object, this.bat_show_detail_label));
         }    
 
         this.appletArea.createDrawingArea();
@@ -356,6 +375,7 @@ GraphicalHWMonitorApplet.prototype = {
     createThemeObject: function() {
         this.theme_object = new Object();
         this.theme_object.theme = this.theme;
+        this.theme_object.graph_line_mode = this.graph_line_mode;
         this.theme_object.border_colors = this.getColors(this.border_color);
         this.theme_object.background_colors1 = this.getColors(this.background_color1);
         this.theme_object.background_colors2 = this.getColors(this.background_color2);
@@ -382,6 +402,8 @@ GraphicalHWMonitorApplet.prototype = {
         this.theme_object.diskread_custom_label = this.diskread_custom_label;
         this.theme_object.diskwrite_use_custom_label = this.diskwrite_use_custom_label;
         this.theme_object.diskwrite_custom_label = this.diskwrite_custom_label;
+        this.theme_object.bat_use_custom_label = this.bat_use_custom_label;
+        this.theme_object.bat_custom_label = this.bat_custom_label;
     },
 
     restartGHW: function() {
