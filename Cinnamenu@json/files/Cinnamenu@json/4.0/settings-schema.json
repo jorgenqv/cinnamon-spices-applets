@@ -179,7 +179,7 @@
         "type":"checkbox",
         "default":false,
         "description":"Show web bookmarks",
-        "tooltip":"Show your browser's web bookmarks in the menu"
+        "tooltip":"Show your browser's web bookmarks in the menu.\nNote: Install package gir1.2-gda-5.0 to read firefox bookmarks."
     },
     "privacy-settings-button":{
         "type":"button",

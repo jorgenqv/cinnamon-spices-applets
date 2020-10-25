@@ -119,7 +119,7 @@ function readFirefoxProfiles(appSystem) {
             continue;
         }
 
-        if (profileName === 'default') {
+        if (profileName === 'default' || profileName === 'default-release') {
             if (relative) {
                 profileDir = GLib.build_filenamev([firefoxDir, path]);
             } else {
@@ -196,8 +196,9 @@ class BookmarksManager {
         let bookmarks = [];
         Promise.all([
             readChromiumBookmarks(bookmarks, ['chromium', 'Default', 'Bookmarks'], 'chromium-browser', appSystem),
-            readChromiumBookmarks(bookmarks, ['google-chrome', 'Default', 'Bookmarks'], 'google-chrome', appSystem),
-            readChromiumBookmarks(bookmarks, ['.config', 'opera', 'Bookmarks'], 'opera', appSystem)
+            readChromiumBookmarks(bookmarks, ['google-chrome', 'Default', 'Bookmarks'], 'google-chrome', appSystem)
+            //reading opera bookmarks seems to no longer work
+            //readChromiumBookmarks(bookmarks, ['.config', 'opera', 'Bookmarks'], 'opera', appSystem)
         ]).then(() => {
             bookmarks = bookmarks.concat(readFirefoxProfiles(appSystem));
 
@@ -227,4 +228,4 @@ class BookmarksManager {
 }
 
 
-module.exports = {Gda, BookmarksManager};
+module.exports = {BookmarksManager};
