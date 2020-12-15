@@ -10,12 +10,12 @@ function _(str) {
 }
 
 const APPTYPE = {
-    _applications: 0,
-    _places: 1,
-    _recent: 2,
-    _providers: 3,
+    application: 0,
+    place: 1,
+    file: 2,
+    provider: 3,
+    clearlist: 4
 };
-const AppTypes = Object.keys(APPTYPE);
 
 // Work around Cinnamon#8201
 const tryFn = function(callback, errCallback) {
@@ -68,16 +68,16 @@ const St = imports.gi.St;
 const Main = imports.ui.main;
 
 let onlyOneTooltip = null;
-var showTooltip = function (actor, xpos, ypos, center_x, text) {
+var showTooltip = (actor, xpos, ypos, center_x, text) => {
     if (onlyOneTooltip) {
-        global.log("Cinaamenu: Previous tooltip still exists...removing...");
+        global.log("Cinnamenu: Previous tooltip still exists...removing...");
         onlyOneTooltip.destroy();
         onlyOneTooltip = null;
     }
     onlyOneTooltip = new NewTooltip (actor, xpos, ypos, center_x, text);
 };
 
-var hideTooltip = function () {
+var hideTooltip = () => {
     if (onlyOneTooltip) {
         onlyOneTooltip.destroy();
         onlyOneTooltip = null;
@@ -140,15 +140,19 @@ class NewTooltip {
 
 const {latinise} = imports.misc.util;
 
-const searchStr = function (q, str) {
+const searchStr = (q, str, quick = false) => {
     const HIGHTLIGHT_MATCH = true;
     if ( !(typeof q === 'string' && q && typeof str === 'string' && str) ) {
         return { score: 0, result: str };
     }
     let debug_markup ='';
-    let foundPosition,foundLength;
+    let foundPosition = 0;
+    let foundLength = 0;
     const str2 = latinise(str.toLowerCase());
     const qletters = q.replace(/[^a-zA-Z0-9_ ]/g, ''); //latinise(q.toLowerCase()); //already done in doSearch()
+    if(qletters.length == 0){
+        return { score: 0, result: str };
+    }
     let score = 0;
     if (new RegExp('\\b'+qletters).test(str2)) { //match substring from beginning of words
         score = 1.2;
@@ -158,7 +162,7 @@ const searchStr = function (q, str) {
         score = 1.1;
         foundPosition = str2.indexOf(q);
         foundLength = q.length;
-    } else { //else fuzzy match
+    } else if (!quick){ //else fuzzy match
         //find longest substring of str2 made up of letters from qletters
         const found = str2.match(new RegExp('[' + qletters + ']+','g'));
         let length = 0;
@@ -209,5 +213,5 @@ const searchStr = function (q, str) {
     }
 };
 
-module.exports = {SEARCH_DEBUG, _, APPTYPE, AppTypes, tryFn, readFileAsync, readJSONAsync,
+module.exports = {SEARCH_DEBUG, _, APPTYPE, tryFn, readFileAsync, readJSONAsync,
                                                             showTooltip, hideTooltip, searchStr};
