@@ -17,18 +17,18 @@ In **Manual Location** mode the applet either accepts:
 
 You can also save locations what you entered manually and switch between them in the applet *(arrows will appear on both sides of the location in the applet if you have more than two saved)*. 
 
-They are stored in a file at ```$XDG_CONFIG_HOME/weather-mockturtl/locations.json``` or if the variable is not set, ```~/.config/weather-mockturtl/locations.json```. *Only the text what goes into the settings entry is used at the moment, the rest of the data is just there without purpose.*
-
 ## Weather providers to choose from
 
 | Weather Providers       | Needs API key | **Maximum Forecast Days** | **Maximum Forecast Hours** | Required Packages         |
 | ----------------------- | ------------- | ------------------------- | -------------------------- | ------------------------- |
 | **OpenWeatherMap**      | No            | 7                         | 48                         | --                        |
 | **DarkSky**             | Yes*          | 8                         | 168                        | --                        |
+| **Visual Crossing**     | Yes           | 15                        | 336                        | --                        |
 | **MET Norway**          | No            | 10                        | 48                         | --                        |
 | **WeatherBit**          | Yes           | 16                        | 0**                        | --                        |
 | **Yahoo**               | No            | 10                        | 0                          | python3-requests-oauthlib |
-| **Climacell**           | Yes           | 16                        | 96                         | --                        |
+| **ClimacellV3**         | Yes*          | 16                        | 96                         | --                        |
+| **ClimacellV4**         | Yes           | 15                        | 108                        | --                        |
 | **Met Office UK**       | No            | 5                         | 36                         | --                        |
 | **US National Weather** | No            | 7                         | 156                        | --                        |
 
@@ -40,13 +40,19 @@ The default, works out of the box. Big Thanks to them supporting free open sourc
 
 ***[DarkSky has been acquired by Apple](https://blog.darksky.net/dark-sky-has-a-new-home/)** as of March 31, 2020. It does not allow new signups, and it will cease to function at the end of 2021.
 
+## Visual Crossing
+
+* Needs an API key, you can [Sign Up here](https://www.visualcrossing.com/weather/weather-data-services#/signup) and grab one
+
+* Provides 1000 Free calls a day
+
 ### MET Norway
 
 Current weather is shown for the next hour, and the daily forecasts are generated from 6 hour forecasts, so there is a possibility that they  are inaccurate sometimes.
 
 ### Weatherbit.io
 
-* **Needs API key.** Go to [Weatherbit.io](https://www.weatherbit.io/account/create) and create an account. Then go your [Dashboard](https://www.weatherbit.io/account/dashboard) where you should find your secret key already created.
+* To get an API key, go to [Weatherbit.io](https://www.weatherbit.io/account/create) and create an account. Then go your [Dashboard](https://www.weatherbit.io/account/dashboard) where you should find your secret key already created.
 
 * At least 10 minutes as refresh rate is recommended, since otherwise you might exceed you daily quota.
 
@@ -54,11 +60,15 @@ Current weather is shown for the next hour, and the daily forecasts are generate
 
 ### Yahoo
 
-* Current weather refreshes every 2 hours.
+Current weather refreshes every 2 hours.
 
-### Climacell
+### Climacell V3
 
-* API key can be obtained [here](https://developer.climacell.co/sign-up). Register and the API key will be shown in the Overview section. At least 10 minutes refresh rate is recommended with a free plan.
+*Doesn't accept new registrations anymore, will be closed down later this year (2021)
+
+### Climacell V4
+
+API key can be obtained [here](https://app.climacell.co/signup?planid=5fa4047f4acee993fbd7399d&vid=153ef940-c389-41d4-847e-d83d632059d0). Register and the API key will be shown in the Overview section. Free plan comes with 1000 free calls per day.
 
 ### Met Office UK
 
@@ -76,9 +86,12 @@ Sometimes it takes 10-15 seconds to obtain weather, please be patient when it lo
 
 * Observations are quite spotty so it combines multiple observation stations if needed in a 50km area.
 
-## Requirements
+## Versions
 
-* [Cinnamon](https://github.com/linuxmint/Cinnamon) 3.0+, 
+*Versions are automatically selected based on you Cinnamon's version*
+
+* [Cinnamon](https://github.com/linuxmint/Cinnamon) 3.0+ **NOW EOL, won't receive more updates**
+* [Cinnamon](https://github.com/linuxmint/Cinnamon) 3.8+
 
 ## Configuration
 
@@ -91,7 +104,6 @@ http://groups.google.com/group/cinnamon-weather
 ## Future Plans
 
 * None at the moment, I can take requests for provider integrations or for new features
-* After Linux Mint 18 EOL switch to settings-schema based location storage, not file storage.
 
 ## Known Issues
 

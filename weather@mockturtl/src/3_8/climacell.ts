@@ -1,24 +1,3 @@
-export { }; // Declaring as a Module
-
-function importModule(path: string): any {
-    if (typeof require !== 'undefined') {
-        return require('./' + path);
-    } else {
-        if (!AppletDir) var AppletDir = imports.ui.appletManager.applets['weather@mockturtl'];
-        return AppletDir[path];
-    }
-}
-
-// Unable to use type declarations with imports like this, so
-// typing it manually again.
-var utils = importModule("utils");
-var isCoordinate = utils.isCoordinate as (text: any) => boolean;
-var isLangSupported = utils.isLangSupported as (lang: string, languages: Array<string>) => boolean;
-var CelsiusToKelvin = utils.CelsiusToKelvin as (celsius: number) => number;
-var IsNight = utils.IsNight as (sunTimes: SunTimes, date?: Date) => boolean;
-var weatherIconSafely = utils.weatherIconSafely as (code: BuiltinIcons[], icon_type: imports.gi.St.IconType) => BuiltinIcons;
-var _ = utils._ as (str: string) => string;
-
 //////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////
 ///////////                                       ////////////
@@ -27,7 +6,16 @@ var _ = utils._ as (str: string) => string;
 //////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////
 
-class Climacell implements WeatherProvider {
+import { HttpError } from "./httpLib";
+import { Log } from "./logger";
+import { WeatherApplet } from "./main";
+import { SunTimes } from "./sunCalc";
+import { WeatherProvider, WeatherData, HourlyForecastData, ForecastData, Condition, LocationData } from "./types";
+import { CelsiusToKelvin, _, IsNight } from "./utils";
+
+const Lang: typeof imports.lang = imports.lang;
+
+export class Climacell implements WeatherProvider {
 
     //--------------------------------------------------------
     //  Properties
@@ -37,6 +25,7 @@ class Climacell implements WeatherProvider {
     public readonly maxForecastSupport = 16;
     public readonly website = "https://www.climacell.co/";
     public readonly maxHourlyForecastSupport = 96;
+    public readonly needsApiKey = true;
 
     private baseUrl = "https://api.climacell.co/v3/weather/";
     private callData: CallDict = {
@@ -64,51 +53,38 @@ class Climacell implements WeatherProvider {
     //--------------------------------------------------------
     //  Functions
     //--------------------------------------------------------
-    public async GetWeather(loc: Location): Promise<WeatherData> {
-        let hourly = this.GetData("hourly", loc, this.ParseHourly) as Promise<HourlyForecastData[]>;
-        let daily = this.GetData("daily", loc, this.ParseDaily) as Promise<ForecastData[]>;
-        let current = await this.GetData("current", loc, this.ParseWeather) as WeatherData;
+    public async GetWeather(loc: LocationData): Promise<WeatherData> {
+        let hourly = this.GetData("hourly", loc, Lang.bind(this, this.ParseHourly)) as Promise<HourlyForecastData[]>;
+        let daily = this.GetData("daily", loc, Lang.bind(this, this.ParseDaily)) as Promise<ForecastData[]>;
+        let current = await this.GetData("current", loc, Lang.bind(this, this.ParseWeather)) as WeatherData;
         current.forecasts = await daily;
         current.hourlyForecasts = await hourly;
 
         return current;
     };
 
-    // A function as a function parameter 2 levels deep does not know
-    // about the top level object information, has to pass it in as a paramater
     /**
      * 
      * @param baseUrl 
      * @param ParseFunction returns WeatherData or ForecastData Object
      */
-    private async GetData(baseUrl: CallType, loc: Location, ParseFunction: (json: any, context: any) => WeatherData | ForecastData[] | HourlyForecastData[]) {
-        let query = this.ConstructQuery(baseUrl, loc);
-        let json;
-        if (query != null) {
-            try {
-                json = await this.app.LoadJsonAsync(query, this.OnObtainingData);
-            }
-            catch (e) {
-                this.app.HandleHTTPError("climacell", e, this.app, null);
-                return null;
-            }
+    private async GetData(baseUrl: CallType, loc: LocationData, ParseFunction: (json: any) => WeatherData | ForecastData[] | HourlyForecastData[]) {
+		let query = this.ConstructQuery(baseUrl, loc);
+		if (query == null)
+			return null;
 
-            if (json == null) {
-                this.app.HandleError({ type: "soft", detail: "no api response", service: "climacell" });
-                return null;
-            }
+		let json = await this.app.LoadJsonAsync(query, null, Lang.bind(this, this.HandleError));
 
-            return ParseFunction(json, this);
-        }
-        else {
-            return null;
-        }
+		if (json == null)
+			return null;
+
+		return ParseFunction(json);
     };
 
 
-    private ParseWeather(json: any, ctx: Climacell): WeatherData {
+    private ParseWeather(json: any): WeatherData {
         try {
-            let suntimes: SunTimes = {
+            let sunTimes: SunTimes = {
                 sunrise: new Date(json.sunrise.value),
                 sunset: new Date(json.sunset.value)
             }
@@ -138,7 +114,7 @@ class Climacell implements WeatherProvider {
                     type: "temperature",
                     value: CelsiusToKelvin(json.feels_like.value)
                 },
-                condition: ctx.ResolveCondition(json.weather_code.value, IsNight(suntimes)),
+                condition: this.ResolveCondition(json.weather_code.value, IsNight(sunTimes)),
                 forecasts: []
             };
 
@@ -146,17 +122,17 @@ class Climacell implements WeatherProvider {
             return result;
         }
         catch (e) {
-            ctx.app.log.Error("Climacell payload parsing error: " + e)
-            ctx.app.HandleError({ type: "soft", detail: "unusual payload", service: "climacell", message: _("Failed to Process Weather Info") });
+            Log.Instance.Error("Climacell payload parsing error: " + e)
+            this.app.ShowError({ type: "soft", detail: "unusual payload", service: "climacell", message: _("Failed to Process Weather Info") });
             return null;
         }
     };
 
-    private ParseHourly(json: any, ctx: Climacell): HourlyForecastData[] {
+    private ParseHourly(json: any): HourlyForecastData[] {
         let results: HourlyForecastData[] = [];
         for (let index = 0; index < json.length; index++) {
             const element = json[index];
-            let suntimes: SunTimes = {
+            let sunTimes: SunTimes = {
                 sunrise: new Date(element.sunrise.value),
                 sunset: new Date(element.sunset.value)
             }
@@ -168,14 +144,14 @@ class Climacell implements WeatherProvider {
                     volume: null,
                     chance: element.precipitation_probability.value
                 },
-                condition: ctx.ResolveCondition(element.weather_code.value, IsNight(suntimes, new Date(element.observation_time.value)))
+                condition: this.ResolveCondition(element.weather_code.value, IsNight(sunTimes, new Date(element.observation_time.value)))
             }
             results.push(hour);
         }
         return results;
     }
 
-    private ParseDaily(json: any, ctx: Climacell): ForecastData[] {
+    private ParseDaily(json: any): ForecastData[] {
         let results: ForecastData[] = [];
         for (let index = 0; index < json.length; index++) {
             const element = json[index];
@@ -183,28 +159,15 @@ class Climacell implements WeatherProvider {
                 date: new Date(element.observation_time.value),
                 temp_max: CelsiusToKelvin(element.temp[1].max.value),
                 temp_min: CelsiusToKelvin(element.temp[0].min.value),
-                condition: ctx.ResolveCondition(element.weather_code.value)
+                condition: this.ResolveCondition(element.weather_code.value)
             }
             results.push(day);
         }
         return results;
     }
 
-    private ConstructQuery(subcall: CallType, loc: Location): string {
-        let query;
-        let key = this.app.config._apiKey.replace(" ", "");
-        if (this.app.config.noApiKey()) {
-            this.app.log.Error("Climacell: No API Key given");
-            this.app.HandleError({
-                type: "hard",
-                userError: true,
-                "detail": "no key",
-                message: _("Please enter API key in settings,\nor get one first on " + "https://developer.climacell.co/sign-up")
-            });
-            return null;
-        }
-        query = this.baseUrl + this.callData[subcall].url + "?apikey=" + key + "&lat=" + loc.lat + "&lon=" + loc.lon + "&unit_system=" + this.unit + "&fields=" + this.callData[subcall].required_fields.join();
-        return query;
+    private ConstructQuery(callType: CallType, loc: LocationData): string {
+        return this.baseUrl + this.callData[callType].url + "?apikey=" + this.app.config.ApiKey + "&lat=" + loc.lat + "&lon=" + loc.lon + "&unit_system=" + this.unit + "&fields=" + this.callData[callType].required_fields.join();
     };
 
     /**
@@ -212,26 +175,28 @@ class Climacell implements WeatherProvider {
     * @param message Soup Message object
     * @returns null if custom error checking does not find anything
     */
-    private OnObtainingData(message: any): AppletError {
-        if (message.status_code == 403) {
-            return {
+    private HandleError(message: HttpError): boolean {
+        if (message.code == 403) {
+            this.app.ShowError({
                 type: "hard",
                 userError: true,
                 detail: "bad key",
                 service: "climacell",
                 message: _("Please Make sure you\nentered the API key correctly and your account is not locked")
-            };
+            });
+            return false;
         }
-        if (message.status_code == 401) {
-            return {
+        else if (message.code == 401) {
+            this.app.ShowError({
                 type: "hard",
                 userError: true,
                 detail: "no key",
                 service: "climacell",
                 message: _("Please Make sure you\nentered the API key what you have from Climacell")
-            };
+            });
+            return false;
         }
-        return null;
+        return true;
     }
 
     private ResolveCondition(condition: string, isNight: boolean = false): Condition {
@@ -239,171 +204,171 @@ class Climacell implements WeatherProvider {
             case ("rain_heavy"):
                 return {
                     customIcon: "rain-symbolic",
-                    description: _("Substantial Rain"),
-                    main: _("Substantial Rain"),
-                    icon: weatherIconSafely(["weather-rain", "weather-freezing-rain", "weather-showers-scattered"], this.app.config.IconType())
+                    description: _("Heavy rain"),
+                    main: _("Heavy rain"),
+                    icons: ["weather-rain", "weather-freezing-rain", "weather-showers-scattered"]
                 }
             case ("rain"):
                 return {
                     customIcon: "rain-symbolic",
                     description: _("Rain"),
                     main: _("Rain"),
-                    icon: weatherIconSafely(["weather-rain", "weather-freezing-rain", "weather-showers-scattered"], this.app.config.IconType())
+                    icons: ["weather-rain", "weather-freezing-rain", "weather-showers-scattered"]
                 }
             case ("rain_light"):
                 return {
                     customIcon: "rain-mix-symbolic",
-                    description: _("Light Rain"),
-                    main: _("Light Rain"),
-                    icon: weatherIconSafely(["weather-showers-scattered", "weather-rain", "weather-freezing-rain"], this.app.config.IconType())
+                    description: _("Light rain"),
+                    main: _("Light rain"),
+                    icons: ["weather-showers-scattered", "weather-rain", "weather-freezing-rain"]
                 }
             case ("freezing_rain_heavy"):
                 return {
                     customIcon: "hail-symbolic",
-                    description: _("Substantial Freezing Rain"),
-                    main: _("Freezing Rain"),
-                    icon: weatherIconSafely(["weather-freezing-rain", "weather-rain", "weather-showers-scattered"], this.app.config.IconType())
+                    description: _("Heavy freezing rain"),
+                    main: _("Freezing rain"),
+                    icons: ["weather-freezing-rain", "weather-rain", "weather-showers-scattered"]
                 }
             case ("freezing_rain"):
                 return {
                     customIcon: "hail-symbolic",
-                    description: _("Freezing Rain"),
-                    main: _("Freezing Rain"),
-                    icon: weatherIconSafely(["weather-freezing-rain", "weather-rain", "weather-showers-scattered"], this.app.config.IconType())
+                    description: _("Freezing rain"),
+                    main: _("Freezing rain"),
+                    icons: ["weather-freezing-rain", "weather-rain", "weather-showers-scattered"]
                 }
             case ("freezing_rain_light"):
                 return {
                     customIcon: "hail-symbolic",
-                    description: _("Light Freezing Rain"),
-                    main: _("Freezing Rain"),
-                    icon: weatherIconSafely(["weather-showers-scattered", "weather-freezing-rain", "weather-rain"], this.app.config.IconType())
+                    description: _("Light freezing rain"),
+                    main: _("Freezing rain"),
+                    icons: ["weather-showers-scattered", "weather-freezing-rain", "weather-rain"]
                 }
             case ("freezing_drizzle"):
                 return {
                     customIcon: "sleet-symbolic",
                     description: _("Light freezing drizzle"),
-                    main: _("Freezing Drizzle"),
-                    icon: weatherIconSafely(["weather-showers-scattered", "weather-rain", "weather-freezing-rain"], this.app.config.IconType())
+                    main: _("Freezing drizzle"),
+                    icons: ["weather-showers-scattered", "weather-rain", "weather-freezing-rain"]
                 }
             case ("drizzle"):
                 return {
                     customIcon: "sleet-symbolic",
-                    description: _("Light Drizzle"),
-                    main: _("Light Drizzle"),
-                    icon: weatherIconSafely(["weather-showers-scattered", "weather-rain", "weather-freezing-rain"], this.app.config.IconType())
+                    description: _("Light drizzle"),
+                    main: _("Light drizzle"),
+                    icons: ["weather-showers-scattered", "weather-rain", "weather-freezing-rain"]
                 }
             case ("ice_pellets_heavy"):
                 return {
                     customIcon: "snow-wind-symbolic",
-                    description: _("Substantial Ice Pellets"),
-                    main: _("Ice Pellets"),
-                    icon: weatherIconSafely(["weather-freezing-rain", "weather-rain", "weather-showers-scattered"], this.app.config.IconType())
+                    description: _("Heavy ice pellets"),
+                    main: _("Ice pellets"),
+                    icons: ["weather-freezing-rain", "weather-rain", "weather-showers-scattered"]
                 }
             case ("ice_pellets"):
                 return {
                     customIcon: "snow-wind-symbolic",
-                    description: _("Ice Pellets"),
-                    main: _("Ice Pellets"),
-                    icon: weatherIconSafely(["weather-freezing-rain", "weather-rain", "weather-showers-scattered"], this.app.config.IconType())
+                    description: _("Ice pellets"),
+                    main: _("Ice pellets"),
+                    icons: ["weather-freezing-rain", "weather-rain", "weather-showers-scattered"]
                 }
             case ("ice_pellets_light"):
                 return {
                     customIcon: "snow-wind-symbolic",
-                    description: _("Light Ice Pellets"),
-                    main: _("Ice Pellets"),
-                    icon: weatherIconSafely(["weather-freezing-rain", "weather-rain", "weather-showers-scattered"], this.app.config.IconType())
+                    description: _("Light ice pellets"),
+                    main: _("Ice pellets"),
+                    icons: ["weather-freezing-rain", "weather-rain", "weather-showers-scattered"]
                 }
             case ("snow_heavy"):
                 return {
                     customIcon: "snow-symbolic",
-                    description: _("Substantial Snow"),
-                    main: _("Substantial Snow"),
-                    icon: weatherIconSafely(["weather-snow"], this.app.config.IconType())
+                    description: _("Heavy snow"),
+                    main: _("Heavy snow"),
+                    icons: ["weather-snow"]
                 }
             case ("snow"):
                 return {
                     customIcon: "snow-symbolic",
                     description: _("Snow"),
                     main: _("Snow"),
-                    icon: weatherIconSafely(["weather-snow"], this.app.config.IconType())
+                    icons: ["weather-snow"]
                 }
             case ("snow_light"):
                 return {
                     customIcon: "snow-symbolic",
                     description: _("Light Snow"),
                     main: _("Light Snow"),
-                    icon: weatherIconSafely(["weather-snow"], this.app.config.IconType())
+                    icons: ["weather-snow"]
                 }
             case ("flurries"):
                 return {
                     customIcon: "cloudy-gusts-symbolic",
                     description: _("Flurries"),
                     main: _("Flurries"),
-                    icon: weatherIconSafely(["weather-snow"], this.app.config.IconType())
+                    icons: ["weather-snow"]
                 }
             case ("tstorm"):
                 return {
                     customIcon: "thunderstorm-symbolic",
                     description: _("Thunderstorm"),
                     main: _("Thunderstorm"),
-                    icon: weatherIconSafely(["weather-storm"], this.app.config.IconType())
+                    icons: ["weather-storm"]
                 }
             case ("fog_light"):
                 return {
                     customIcon: (isNight) ? "night-fog-symbolic" : "day-fog-symbolic",
-                    description: _("Light Fog"),
-                    main: _("Light Fog"),
-                    icon: weatherIconSafely(["weather-fog"], this.app.config.IconType())
+                    description: _("Light fog"),
+                    main: _("Light fog"),
+                    icons: ["weather-fog"]
                 }
             case ("fog"):
                 return {
                     customIcon: "fog-symbolic",
                     description: _("Fog"),
                     main: _("Fog"),
-                    icon: weatherIconSafely(["weather-fog"], this.app.config.IconType())
+                    icons: ["weather-fog"]
                 }
             case ("cloudy"):
                 return {
                     customIcon: "cloudy-symbolic",
                     description: _("Cloudy"),
                     main: _("Cloudy"),
-                    icon: (isNight) ? weatherIconSafely(["weather-overcast", "weather-clouds-night", "weather-few-clouds-night"], this.app.config.IconType()) : weatherIconSafely(["weather-overcast", "weather-clouds", "weather-few-clouds"], this.app.config.IconType())
+                    icons: (isNight) ? ["weather-overcast", "weather-clouds-night", "weather-few-clouds-night"] : ["weather-overcast", "weather-clouds", "weather-few-clouds"]
                 }
             case ("mostly_cloudy"):
                 return {
                     customIcon: (isNight) ? "night-alt-cloudy-symbolic" : "day-cloudy-symbolic",
-                    description: _("Mostly Cloudy"),
-                    main: _("Mostly Cloudy"),
-                    icon: weatherIconSafely((isNight) ? ["weather-clouds-night", "weather-few-clouds-night", "weather-overcast"] : ["weather-clouds", "weather-few-clouds", "weather-overcast"], this.app.config.IconType())
+                    description: _("Mostly cloudy"),
+                    main: _("Mostly cloudy"),
+                    icons: (isNight) ? ["weather-clouds-night", "weather-few-clouds-night", "weather-overcast"] : ["weather-clouds", "weather-few-clouds", "weather-overcast"]
                 }
             case ("partly_cloudy"):
                 return {
                     customIcon: (isNight) ? "night-alt-cloudy-symbolic" : "day-cloudy-symbolic",
-                    description: _("Partly Cloudy"),
-                    main: _("Partly Cloudy"),
-                    icon: weatherIconSafely((isNight) ? ["weather-clouds-night", "weather-few-clouds-night", "weather-overcast"] : ["weather-clouds", "weather-few-clouds", "weather-overcast"], this.app.config.IconType())
+                    description: _("Partly cloudy"),
+                    main: _("Partly cloudy"),
+                    icons: (isNight) ? ["weather-clouds-night", "weather-few-clouds-night", "weather-overcast"] : ["weather-clouds", "weather-few-clouds", "weather-overcast"]
                 }
             case ("mostly_clear"):
                 return {
                     customIcon: (isNight) ? "night-alt-partly-cloudy-symbolic" : "day-cloudy-symbolic",
-                    description: _("Mostly Clear"),
-                    main: _("Mostly Clear"),
-                    icon: weatherIconSafely((isNight) ? ["weather-few-clouds-night", "weather-clouds-night", "weather-overcast"] : ["weather-few-clouds", "weather-clouds", "weather-overcast"], this.app.config.IconType())
+                    description: _("Mostly clear"),
+                    main: _("Mostly clear"),
+                    icons: (isNight) ? ["weather-few-clouds-night", "weather-clouds-night", "weather-overcast"] : ["weather-few-clouds", "weather-clouds", "weather-overcast"]
                 }
             case ("clear"):
                 return {
                     customIcon: (isNight) ? "night-clear-symbolic" : "day-sunny-symbolic",
                     description: (isNight) ? _("Clear") : _("Sunny"),
                     main: (isNight) ? _("Clear") : _("Sunny"),
-                    icon: weatherIconSafely((isNight) ? ["weather-clear-night"] : ["weather-clear"], this.app.config.IconType())
+                    icons: (isNight) ? ["weather-clear-night"] : ["weather-clear"]
                 }
             default:
-                this.app.log.Error("condition code not found: " + condition);
+                Log.Instance.Error("condition code not found: " + condition);
                 return {
                     customIcon: "refresh-symbolic",
                     description: _("Unknown"),
                     main: _("Unknown"),
-                    icon: weatherIconSafely(["weather-severe-alert"], this.app.config.IconType())
+                    icons: ["weather-severe-alert"]
                 }
         }
     }
@@ -411,7 +376,7 @@ class Climacell implements WeatherProvider {
 
 /**
  * - 'si' returns meter/sec and Celsius
- * - 'us' returns miles/hour and Farhenheit
+ * - 'us' returns miles/hour and Fahrenheit
  */
 type queryUnits = 'si' | 'us';
 

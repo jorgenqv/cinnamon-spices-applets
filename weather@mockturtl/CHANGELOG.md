@@ -1,5 +1,29 @@
 # Changelog
 
+## 3.0.1
+
+* Fix issue where Symbolic icons setting was not reflected in the app when changed
+
+* Fix [#3486](https://github.com/linuxmint/cinnamon-spices-applets/issues/3486), now wind icons point to the right direction
+
+* Fix wind icon color when non-symbolic icons used in the applet
+
+* Fix [#3488](https://github.com/linuxmint/cinnamon-spices-applets/issues/3488), add Climacell V4 as a new provider because Climacell v3 is deprecated and dosen't accept new signups.
+
+* Make network and DNS related errors soft errors again
+
+## 3.0.0
+
+* Deprecating 3.0 in favor of refactoring 3.8 codebase to use in-build module resolution in TS
+* Fix issue in 3.0 where locations were not deleted from locationstore
+* Inline icons now respect the current font size
+* Buttons should remain highlighted after clicked as long as the cursor is still in their area
+* Change location storage to config based instead of file based
+* Add Visual Crossing as an API choice
+* Allow saving automatic locations
+* Saved locations will be prioritized based on the search entry when getting locations for refresh
+* Wind directions are now represented by icons
+
 ## 2.7.0
 
 * Fix [#3334](https://github.com/linuxmint/cinnamon-spices-applets/issues/3334), Add missing Weather conditions localization for Yahoo

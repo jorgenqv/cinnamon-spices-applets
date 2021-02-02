@@ -77,7 +77,7 @@ class CinnamenuApplet extends TextIconApplet {
         this.signals.connect(this.iconTheme, 'changed', (...args) => this.onIconsChanged(...args));
         this.signals.connect(this.appSystem, 'installed-changed',
                                                         (...args) => this.apps.installedChanged(...args));
-        this.signals.connect(this.appFavorites, 'changed', (...args) => this.onFavoritesChanged(...args));
+        this.signals.connect(this.appFavorites, 'changed', (...args) => this.onFavoriteAppsChanged(...args));
         this.signals.connect(this.menu, 'open-state-changed', (...args) => this.onOpenStateToggled(...args));
         //this.signals.connect(global, 'scale-changed', () => this.refresh() );
         this.categories = new Categories(this);
@@ -126,6 +126,7 @@ class CinnamenuApplet extends TextIconApplet {
             { key: 'enable-autoscroll',         value: 'enableAutoScroll',      cb: this.refresh },
             { key: 'web-search-option',         value: 'webSearchOption',       cb: null },
             { key: 'enable-emoji-search',       value: 'enableEmojiSearch',     cb: null },
+            { key: 'show-hidden-files',         value: 'showHiddenFiles',       cb: null },
 
             { key: 'menu-icon-custom',          value: 'menuIconCustom',        cb: this.updateIconAndLabel },
             { key: 'menu-icon',                 value: 'menuIcon',              cb: this.updateIconAndLabel },
@@ -352,7 +353,7 @@ class CinnamenuApplet extends TextIconApplet {
         }
     }
 
-    onFavoritesChanged() {
+    onFavoriteAppsChanged() {
         // Check if the menu has been rendered at least once
         if (this.appsView) {
             this.sidebar.populate();
@@ -401,7 +402,7 @@ class CinnamenuApplet extends TextIconApplet {
         }
     }
 
-    addFavoriteToPos(add_id, pos_id) {
+    addFavoriteAppToPos(add_id, pos_id) {
         const pos = this.appFavorites._getIds().indexOf(pos_id);
         if (pos >= 0) { //move
             Meta.later_add(Meta.LaterType.BEFORE_REDRAW, () => {
@@ -555,7 +556,8 @@ class CinnamenuApplet extends TextIconApplet {
         this.sidebar.sidebarScrollBox.set_height(-1);
         this.sidebar.sidebarScrollBox.set_height(Math.min(appsHeight, this.sidebar.sidebarScrollBox.height));
         if (!this.resizer.resizingInProgress) {
-            //due to a intermittent bug, don't update settings while resizing
+            //due to a intermittent bug causing cinnamon to crash, don't update settings while resizing
+            //https://github.com/linuxmint/cinnamon/pull/9771#issuecomment-755081805
             this.settings.customMenuHeight = menuHeight;
         }
     }
@@ -579,7 +581,7 @@ class CinnamenuApplet extends TextIconApplet {
         let minMenuWidth = Math.max(leftSideWidth + 200, bottomPaneMinWidth);
         let menuWidth = Math.max(minMenuWidth, newWidth);
         if (!this.resizer.resizingInProgress) {
-            //due to a intermittent bug, don't update settings while resizing
+            //due to a intermittent bug causing cinnamon to crash, don't update settings while resizing
             //https://github.com/linuxmint/cinnamon/pull/9771#issuecomment-755081805
             this.settings.customMenuWidth = menuWidth;
         }
@@ -1114,7 +1116,7 @@ class CinnamenuApplet extends TextIconApplet {
         if (validExp) {
             ans = tryFn(()=>{ return eval(exp); }, null);
         }
-        if ((typeof ans == 'number' || typeof ans == 'boolean') && ans != text ) {
+        if ((typeof ans === 'number' || typeof ans === 'boolean') && ans != text ) {
             const calcIcon = Gio.file_new_for_path(__meta.path + '/calc.png');
             results.push({  type: APPTYPE.provider,
                             name: _('Solution:') + ' ' + ans,
@@ -1354,7 +1356,12 @@ class CinnamenuApplet extends TextIconApplet {
         //if a blank part of the menu was clicked on, close context menu
         this.menu.actor.set_reactive(true);
         this.displaySignals.connect(this.menu.actor, 'button-release-event',
-                                                        (...args) => {this.clearEnteredActors();});
+                                            (...args) => {
+                                                    if (!this.stopMouseEvent) {
+                                                        this.clearEnteredActors();
+                                                    } else {
+                                                        this.stopMouseEvent = false;
+                                                    } });
         //monitor mouse motion to prevent category mis-selection
         this.categoriesView.categoriesBox.set_reactive(true);
         this.displaySignals.connect(this.categoriesView.categoriesBox, "motion-event",
@@ -1408,7 +1415,7 @@ class CinnamenuApplet extends TextIconApplet {
 
     destroyDisplayed() {
         const destroyContainer = (container) => {
-                        if (typeof this[container] == 'undefined') return false;
+                        if (typeof this[container] === 'undefined') return false;
                         container = this[container];
                         if (!container || container.is_finalized()) return false;
                         container.get_children().forEach(child => child.destroy());
@@ -1603,7 +1610,26 @@ class AppsView {
         this.applicationsScrollBox.set_auto_scrolling(this.appThis.settings.enableAutoScroll);
         this.applicationsScrollBox.set_mouse_scrolling(true);
 
+        //this.applicationsScrollBox.set_reactive(true);
+        //this.appThis.displaySignals.connect(this.applicationsScrollBox, 'button-release-event',
+        //                                                (...args) => {this.onButtonRelease(...args);});
     }
+
+    /*onButtonRelease(actor, event) {
+        const button = event.get_button();
+        if (button === 3) {//right click
+            if (this.appThis.contextMenu.isOpen) {
+                this.appThis.clearEnteredActors();
+                return Clutter.EVENT_STOP;
+            } else if (this.appThis.currentCategory.startsWith('/')) {//if directory view
+                this.appThis.contextMenu.open(this.appThis.currentCategory, event);
+                //for some reason return Clutter.EVENT_STOP; is not stopping the event?
+                this.appThis.stopMouseEvent = true;
+                return Clutter.EVENT_STOP;
+            }
+        }
+        return Clutter.EVENT_PROPAGATE;
+    }*/
 
     getActiveButtons() {
         const buttons = [];
@@ -1715,7 +1741,8 @@ class Apps {
         while ((nextType = iter.next()) !== CMenu.TreeItemType.INVALID) {
             if (nextType === CMenu.TreeItemType.ENTRY) {
                 const entry = iter.get_entry();
-                if (!entry.get_app_info().get_nodisplay()) {
+                const appInfo = entry.get_app_info();
+                if (appInfo && !appInfo.get_nodisplay()) {
                     const id = entry.get_desktop_file_id();
                     const app = this.appThis.appSystem.lookup_app(id);
                     let found = false;
@@ -1815,7 +1842,11 @@ class Apps {
     }
 
     listRecent(pattern) {
-        const {_infosByTimestamp} = this.recentManager;
+        let {_infosByTimestamp} = this.recentManager;
+        if (this.appThis.recentsJustCleared) {//_infosByTimestamp doesn't update synchronously
+            _infosByTimestamp = [];
+            this.appThis.recentsJustCleared = false;
+        }
         let res = [];
         _infosByTimestamp.forEach(recentInfo => {
             /*if (!GLib.file_test(Gio.File.new_for_uri(recentInfo.uri).get_path(), GLib.FileTest.EXISTS)) {
@@ -1959,7 +1990,7 @@ class Apps {
         }
         while (next) {
             const filename = next.get_name();
-            if (!filename.startsWith('.')) {
+            if (this.appThis.settings.showHiddenFiles || !filename.startsWith('.')) {
                 const file = Gio.file_new_for_path(folder + (folder === '/' ? '' : '/') + filename);
                 res.push({  name: next.get_name(),
                             icon: null,
@@ -1974,6 +2005,10 @@ class Apps {
         }
         res.sort((a, b) => {    if (!a.isDirectory && b.isDirectory) return 1;
                                 else if (a.isDirectory && !b.isDirectory) return -1;
+                                else if (a.isDirectory && b.isDirectory &&
+                                            a.name.startsWith('.') && !b.name.startsWith('.')) return 1;
+                                else if (a.isDirectory && b.isDirectory &&
+                                            !a.name.startsWith('.') && b.name.startsWith('.')) return -1;
                                 else {
                                     const nameA = a.name.toLowerCase();
                                     const nameB = b.name.toLowerCase();
