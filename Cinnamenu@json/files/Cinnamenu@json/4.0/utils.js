@@ -1,5 +1,7 @@
 const SEARCH_DEBUG = false;
+const GLib = imports.gi.GLib;
 const Gettext = imports.gettext;
+Gettext.bindtextdomain('Cinnamenu@json', GLib.get_home_dir() + "/.local/share/locale");
 
 function _(str) {
     let cinnamonTranslation = Gettext.gettext(str);
@@ -28,6 +30,7 @@ const tryFn = function(callback, errCallback) {
     }
 };
 
+const wordWrap = text => text.match( /.{1,80}(\s|$|-|=|\+)|\S+?(\s|$|-|=|\+)/g ).join('\n');
 //=========================================
 
 const Gio = imports.gi.Gio;
@@ -211,5 +214,5 @@ const searchStr = (q, str, quick = false) => {
     }
 };
 
-module.exports = {SEARCH_DEBUG, _, APPTYPE, tryFn, readFileAsync, readJSONAsync,
+module.exports = {SEARCH_DEBUG, _, APPTYPE, tryFn, readFileAsync, readJSONAsync, wordWrap,
                                                             showTooltip, hideTooltip, searchStr};
