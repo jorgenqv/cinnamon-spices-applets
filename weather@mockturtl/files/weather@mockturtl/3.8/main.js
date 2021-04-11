@@ -112,6 +112,7 @@ class WeatherApplet extends TextIconApplet {
                 return "fail";
             }
             weatherInfo = this.MergeWeatherData(weatherInfo, location);
+            this.config.Timezone = weatherInfo.location.timeZone;
             if (rebuild)
                 this.ui.Rebuild(this.config);
             if (!this.ui.Display(weatherInfo, this.config, this.provider) ||
@@ -142,7 +143,7 @@ class WeatherApplet extends TextIconApplet {
     }
     DisplayWeatherOnLabel(temperature, mainCondition) {
         mainCondition = utils_1.CapitalizeFirstLetter(mainCondition);
-        let temp = utils_1.TempToUserConfig(temperature, this.config.TemperatureUnit, this.config._tempRussianStyle);
+        let temp = utils_1.TempToUserConfig(temperature, this.config);
         let label = "";
         if (this.Orientation != Side.LEFT && this.Orientation != Side.RIGHT) {
             if (this.config._showCommentInPanel) {
@@ -152,7 +153,7 @@ class WeatherApplet extends TextIconApplet {
                 if (label != "") {
                     label += " ";
                 }
-                label += (temp + ' ' + utils_1.UnitToUnicode(this.config.TemperatureUnit));
+                label += `${temp} ${utils_1.UnitToUnicode(this.config.TemperatureUnit)}`;
             }
         }
         else {
@@ -189,7 +190,7 @@ class WeatherApplet extends TextIconApplet {
         this.set_applet_label(label);
     }
     GetPanelHeight() {
-        return this.panel._getScaledPanelHeight();
+        return this.panel.height;
     }
     GetMaxForecastDays() {
         if (!this.provider)

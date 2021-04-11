@@ -41,7 +41,8 @@ const Keys = {
     RUSSIAN_STYLE: "tempRussianStyle",
     SHORT_HOURLY_TIME: "shortHourlyTime",
     SHOW_FORECAST_DATES: "showForecastDates",
-    WEATHER_USE_SYMBOLIC_ICONS_KEY: 'useSymbolicIcons'
+    WEATHER_USE_SYMBOLIC_ICONS_KEY: 'useSymbolicIcons',
+    IMMEDIATE_PRECIP: "immediatePrecip"
 };
 class Config {
     constructor(app, instanceID) {
@@ -57,6 +58,7 @@ class Config {
         this.WEATHER_LOCATION_LIST = "locationList";
         this.doneTypingLocation = null;
         this.currentLocation = null;
+        this.timezone = null;
         this.app = app;
         this.currentLocale = utils_1.ConstructJsLocale(get_language_names()[0]);
         logger_1.Log.Instance.Debug("System locale is " + this.currentLocale);
@@ -69,6 +71,14 @@ class Config {
         this.currentFontSize = this.GetCurrentFontSize();
         this.BindSettings();
         this.LocStore = new locationstore_1.LocationStore(this.app, this);
+    }
+    get Timezone() {
+        return this.timezone;
+    }
+    set Timezone(value) {
+        if (!value || value == "")
+            value = null;
+        this.timezone = value;
     }
     BindSettings() {
         let k;

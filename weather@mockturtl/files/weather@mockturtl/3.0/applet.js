@@ -6,6 +6,8 @@ var __extends = (this && this.__extends) || (function () {
         return extendStatics(d, b);
     };
     return function (d, b) {
+        if (typeof b !== "function" && b !== null)
+            throw new TypeError("Class extends value " + String(b) + " is not a constructor or null");
         extendStatics(d, b);
         function __() { this.constructor = d; }
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
@@ -398,7 +400,7 @@ var WeatherApplet = (function (_super) {
         this.set_applet_label(label);
     };
     WeatherApplet.prototype.GetPanelHeight = function () {
-        return this.panel._getScaledPanelHeight();
+        return this.panel.height;
     };
     WeatherApplet.prototype.locationLookup = function () {
         return __awaiter(this, void 0, void 0, function () {
