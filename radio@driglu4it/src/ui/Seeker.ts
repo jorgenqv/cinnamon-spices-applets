@@ -1,12 +1,21 @@
-import { POPUP_MENU_ITEM_CLASS } from "consts"
-import { createActivWidget } from "lib/ActivWidget";
-import { createSlider } from "lib/Slider";
+import { POPUP_MENU_ITEM_CLASS } from "../consts"
+import { createActivWidget } from "../lib/ActivWidget";
+import { createSlider } from "../lib/Slider";
 
 const { BoxLayout, Label } = imports.gi.St
 
 interface Arguments {
     /** position in second */
     onPositionChanged: (position: number) => void
+}
+
+
+function createTimeLabel() {
+
+    return new Label({
+        // used to ensure that the width doesn't change on some fonts
+        style: 'font-family: mono'
+    })
 }
 
 
@@ -29,8 +38,8 @@ export function createSeeker(args: Arguments) {
     // position in seconds
     let position: number
 
-    const positionLabel = new Label()
-    const lengthLabel = new Label();
+    const positionLabel = createTimeLabel()
+    const lengthLabel = createTimeLabel();
 
     const slider = createSlider({
         initialValue: 0.5,
@@ -65,7 +74,6 @@ export function createSeeker(args: Arguments) {
         const newPosition = value * length
 
         onPositionChanged(newPosition)
-
     }
 
 
@@ -73,7 +81,7 @@ export function createSeeker(args: Arguments) {
      * converts seconds to a string in the form of: mm:ss 
      * 
      * e.g. 10 seconds = 00:10, 100 seconds = 01:40,  6000 seconds = 100:00
-     *      * 
+     *       
      * @param seconds 
      * @returns 
      */
