@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.2.2
+
+* Fix [#4292](https://github.com/linuxmint/cinnamon-spices-applets/issues/4292)
+* Fix [#4285](https://github.com/linuxmint/cinnamon-spices-applets/issues/4285)
+
+## 3.2.1
+
+* Fix [#4255](https://github.com/linuxmint/cinnamon-spices-applets/issues/4255)
+* Redact more things when generating logs
+
 ## 3.2.0
 
 * Add requested AccuWeather as a provider
