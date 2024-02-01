@@ -56,6 +56,8 @@ With Radio3.0 you can:
       1. [Arch](#DepArch)  
       1. [Fedora](#DepFedora)  
 
+  1. [How to install the latest version of yt-dlp?](#InstallYtdlp)
+
   1. [How to install the Radio3.0 applet?](#InstallApplet)  
 
   1. [Where to place the Radio3.0 applet icon?](#WhereToPlace)
@@ -105,7 +107,7 @@ Radio3.0 uses:
 
   * _sox_ (Sound eXchange) to record in a file the radio stream, or rather the sound coming out of your sound card.
 
-  * _pacmd_ (PulseAudio Command) which is a _pulseaudio_ tool.
+  * _pacmd_ (PulseAudio Command) which is a _pulseaudio_ tool, usable even with _pipewire_.
 
   * _at_ to schedule recordings.
 
@@ -133,7 +135,7 @@ You can also install _Pulse Effects_ to use several sound effects (reverb, etc) 
 
 `sudo apt update`
 
-`sudo apt install mpv libmpv1 libmpv-dev sox libsox-fmt-all pulseaudio pulseaudio-utils at libnotify-bin youtube-dl ffmpeg ffmpegthumbnailer python3-polib python3-brotli`
+`sudo apt install mpv libmpv-dev sox libsox-fmt-all pulseaudio-utils at libnotify-bin youtube-dl ffmpeg ffmpegthumbnailer python3-polib python3-brotli`
 
 Optionally:
 
@@ -142,7 +144,7 @@ Optionally:
 <a name="DepArch"></a>
 ### Arch
 
-`sudo pacman -Syu mpv sox pulseaudio at libnotify youtube-dl ffmpeg ffmpegthumbnailer python-brotli`
+`sudo pacman -Syu mpv sox at libnotify youtube-dl ffmpeg ffmpegthumbnailer python-brotli`
 
 `yay -S python-polib`
 
@@ -159,12 +161,15 @@ To install Yay on in Arch Linux and other Arch-based systems, run the following 
 <a name="DepFedora"></a>
 ### Fedora
 
-`sudo dnf install mpv sox pulseaudio at libnotify yt-dlp ffmpeg gstreamer1-libav python3-brotli python3-polib`
+`sudo dnf install mpv sox at libnotify yt-dlp ffmpeg gstreamer1-libav python3-brotli python3-polib`
 
 [Return to Table Of Contents](#TOC)
 
 ***
+<a name="InstallYtdlp"></a>
 ## How to install the latest version of yt-dlp?
+Please note that from version 1.0.3, Radio3.0 automatically installs and updates _yr-dlp_ in your `~/bin/` directory.
+
 _yt-dlp_ is used by **Radio3.0** to download videos from YouTube.
 
 The latest version of _yt-dlp_ fixes bugs and in particular takes better account of your browser's cookies so as not to deprive you of the right to download videos for age limit reasons.
@@ -205,7 +210,7 @@ The best place is near the _Sound_ applet. So you can easily control the general
 
 This applet has a menu (left-click) and a contextual menu (right-click).
 
-Some actions can be made using middle-click or scrolling on the icon.
+Some actions can be made using middle-click (play/stop radio) or scrolling on the icon (volume change).
 
 <a name="HowToAdd"></a>
 ### How to add radio stations to my list?
@@ -239,7 +244,7 @@ While listening a radio, the color of the symbolic icon changes (green by defaul
 
 While no radio is playing, middle-click on the icon.
 
-(Another way : Click on the first radio in the *Recently Played Stations* section of the menu.)
+Another way : Click on the first radio in the *Recently Played Stations* section of the menu.
 
 <a name="ListenAtStartup"></a>
 ### Play at Cinnamon startup the last radio you listened to

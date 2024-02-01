@@ -13,6 +13,7 @@
       "title": "⚙ General",
       "sections": [
         "section_Display",
+        "section_Tooltip",
         "section_Report",
         "section_remove_incompatible_xlets"
       ]
@@ -24,6 +25,7 @@
         "section_tempDisplay",
         "section_tempOptions",
         "section_tempSensors",
+        "section_tempDisktemp",
         "section_tempDisks"
       ]
     },
@@ -62,11 +64,20 @@
         "keep_size",
         "char_size",
         "char_color",
+        "separator",
         "remove_border",
         "remove_icons",
+        "restart_in_menu",
+        "show_tooltip"
+      ]
+    },
+    "section_Tooltip": {
+      "type": "section",
+      "dependency": "show_tooltip",
+      "title": "Tooltip",
+      "keys": [
         "bold_values",
-        "bold_italics_main_sensors",
-        "restart_in_menu"
+        "bold_italics_main_sensors"
       ]
     },
     "section_Report": {
@@ -85,13 +96,13 @@
         "remove_temperatureATfevimu"
       ]
     },
-    "section_tempHddtemp": {
+    "section_tempDisktemp": {
       "type": "section",
-      "title": "hddtemp is for now only usable by root",
+      "title": "For the time being, disk temperature can only be read by root.",
       "keys": [
-        "make_hddtemp_usable_by_user"
+        "make_disktemp_readable_by_user"
       ],
-      "dependency": "!hddtemp_is_user_accessible"
+      "dependency": "!disktemp_is_user_readable"
     },
     "section_tempDisplay": {
       "type": "section",
@@ -124,12 +135,13 @@
     },
     "section_tempDisks": {
       "type": "section",
-      "title": "Temperature scripts",
+      "title": "Disk temperature sensors",
       "keys": [
-      "btn_renew_disks_list",
+        "btn_renew_disks_list",
         "temp_disks",
         "update_display"
-      ]
+      ],
+      "dependency": "disktemp_is_user_readable"
     },
     "section_fanDisplay": {
       "type": "section",
@@ -214,7 +226,7 @@
   },
   "interval": {
     "type": "combobox",
-    "default": 1,
+    "default": 10,
     "options": {
       "1": 1,
       "2": 2,
@@ -260,6 +272,12 @@
     },
     "description": "Text Color"
   },
+  "separator": {
+    "type": "entry",
+    "description": "Separator",
+    "default": "|",
+    "tooltip": "The string used to separate values in horizontal orientation. Default is '│'."
+  },
   "remove_border": {
     "type": "switch",
     "default": false,
@@ -272,17 +290,22 @@
     "description": "Remove icons",
     "tooltip": "Whether or not to remove icons in panel."
   },
+  "show_tooltip": {
+    "type": "switch",
+    "default": true,
+    "description": "Display a tooltip on mouseover"
+  },
   "bold_values": {
     "type": "switch",
-    "default": false,
     "dependency": "has_set_markup",
+    "default": false,
     "description": "Show values in bold in the tooltip",
     "tooltip": "Whether or not to show values in bold in the tooltip."
   },
   "bold_italics_main_sensors": {
     "type": "switch",
-    "default": false,
     "dependency": "has_set_markup",
+    "default": false,
     "description": "Show main sensors in bold italics in the tooltip",
     "tooltip": "Whether or not to display the names of the main sensors (those displayed in the panel) in bold italics in the tooltip."
   },
@@ -292,10 +315,10 @@
     "description": "Show in menu the action: Restart this applet",
     "tooltip": "Whether or not to display in menu the action: Restart this applet."
   },
-  "make_hddtemp_usable_by_user": {
+  "make_disktemp_readable_by_user": {
     "type": "button",
-    "description": "Make hddtemp usable by user",
-    "callback": "_on_hddtemp_button_pressed"
+    "description": "Make disk temperature user-readable",
+    "callback": "_on_disktemp_button_pressed"
   },
   "show_temp": {
     "type": "switch",
@@ -375,13 +398,33 @@
       {
         "id": "shown_name",
         "title": "Shown name",
+        "align": 0.5,
         "type": "string"
+      },
+      {
+        "id": "high_by_user",
+        "title": "High\n(°C)",
+        "align": 0.5,
+        "type": "string"
+      },
+      {
+        "id": "crit_by_user",
+        "title": "Critical\n(°C)",
+        "align": 0.5,
+        "type": "string"
+      },
+      {
+        "id": "user_formula",
+        "title": "Formula",
+        "align": 0.5,
+        "type": "string",
+        "default": ""
       }
     ],
     "default": [
 
     ],
-    "tooltip": "Double-click on a line to change Shown name.\nTo reset a Shown name, copy/paste the Sensor name.",
+    "tooltip": "Double-click on a line to change 'Shown name', 'High', 'Critical' or 'Formula'.\nTo reset a 'Shown name', copy/paste the 'Sensor name'.\n'High' and 'Critical' (optional) must be valid numbers.\n'Formula' (optional):\n  Use $ as the value returned by the sensor.\n  You can use the 4 operations (+-*/) and parentheses.\n  Example: $*1.1+0.5",
     "show-buttons": true
   },
   "btn_renew_disks_list": {
@@ -412,13 +455,13 @@
       },
       {
         "id": "shown_name",
-        "title": "Shown name",
+        "title": "Shown\nname",
         "type": "string",
         "default": ""
       },
       {
         "id": "high",
-        "title": "High °C",
+        "title": "High\n(°C)",
         "type": "integer",
         "align": 0.5,
         "min": 0,
@@ -427,12 +470,19 @@
       },
       {
         "id": "crit",
-        "title": "Critical °C",
+        "title": "Critical\n(°C)",
         "type": "integer",
         "align": 0.5,
         "min": 0,
         "max": 127,
         "default": 75
+      },
+      {
+        "id": "user_formula",
+        "title": "Formula",
+        "align": 0.5,
+        "type": "string",
+        "default": ""
       }
     ],
     "default": [
@@ -503,13 +553,27 @@
       {
         "id": "shown_name",
         "title": "Shown name",
+        "align": 0.5,
         "type": "string"
+      },
+      {
+        "id": "min_by_user",
+        "title": "Min\n(rpm)",
+        "align": 0.5,
+        "type": "string"
+      },
+      {
+        "id": "user_formula",
+        "title": "Formula",
+        "align": 0.5,
+        "type": "string",
+        "default": ""
       }
     ],
     "default": [
 
     ],
-    "tooltip": "Double-click on a line to change Shown name.\nTo reset a Shown name, copy/paste the Sensor name.",
+    "tooltip": "Double-click on a line to change 'Shown name', 'Min' or 'Formula'.\nTo reset a 'Shown name', copy/paste the 'Sensor name'.\n'Min' (optional) must be valid number.\n'Formula' (optional):\n  Use $ as the value returned by the sensor.\n  You can use the 4 operations (+-*/) and parentheses.\n  Example: $*1.1+0.5",
     "show-buttons": false
   },
   "numberOfFanSensors": {
@@ -578,14 +642,33 @@
       },
       {
         "id": "shown_name",
-        "title": "Shown name",
+        "title": "Shown\nname",
         "type": "string"
+      },
+      {
+        "id": "min_by_user",
+        "title": "Min\n(V)",
+        "align": 0.5,
+        "type": "string"
+      },
+      {
+        "id": "max_by_user",
+        "title": "Max\n(V)",
+        "align": 0.5,
+        "type": "string"
+      },
+      {
+        "id": "user_formula",
+        "title": "Formula",
+        "align": 0.5,
+        "type": "string",
+        "default": ""
       }
     ],
     "default": [
 
     ],
-    "tooltip": "Double-click on a line to change Shown name.\nTo reset a Shown name, copy/paste the Sensor name.",
+    "tooltip": "Double-click on a line to change 'Shown name', 'Min', 'Max' or 'Formula'.\nTo reset a 'Shown name', copy/paste the 'Sensor name'.\n'Min' and 'Max' (optional) must be valid numbers.\n'Formula' (optional):\n  Use $ as the value returned by the sensor.\n  You can use the 4 operations (+-*/) and parentheses.\n  Example: $*1.1+0.5",
     "show-buttons": false
   },
   "numberOfVoltageSensors": {
@@ -638,7 +721,7 @@
       },
       {
         "id": "shown_name",
-        "title": "Shown name",
+        "title": "Shown\nname",
         "type": "string"
       }
     ],
@@ -683,7 +766,7 @@
     "description": "Remove from panel the temperature@fevimu applet",
     "callback": "_on_remove_temperatureATfevimu_from_panels"
   },
-  "hddtemp_is_user_accessible": {
+  "disktemp_is_user_readable": {
     "type": "generic",
     "default": false
   },

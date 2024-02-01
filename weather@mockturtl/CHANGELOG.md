@@ -1,5 +1,39 @@
 # Changelog
 
+## 3.4.0
+
+* Fix [#5212](https://github.com/linuxmint/cinnamon-spices-applets/issues/5212)
+* Fix [#5392](https://github.com/linuxmint/cinnamon-spices-applets/issues/5392)
+* Fix [#5355](https://github.com/linuxmint/cinnamon-spices-applets/issues/5355)
+* Add description to Manual location entry
+* Fix Saving Logs button not included the redacted config
+* Update library typings for applet
+* Use fedora geoip project for autolocation via the internet
+
+## 3.3.1
+
+Fix nominatim not getting location data due to API changes. Related issues:
+
+* Fix [#4983](https://github.com/linuxmint/cinnamon-spices-applets/issues/4983)
+* Fix [#4981](https://github.com/linuxmint/cinnamon-spices-applets/issues/4981)
+* Fix [#4980](https://github.com/linuxmint/cinnamon-spices-applets/issues/4980)
+
+## 3.3.0
+
+* Fix [#4801](https://github.com/linuxmint/cinnamon-spices-applets/issues/4801) - Link to dmi.dk location not working 
+* Fix [#4800](https://github.com/linuxmint/cinnamon-spices-applets/issues/4800) - Wrong icons (Tomorrow.io and US Weather)
+* Fix [#4780](https://github.com/linuxmint/cinnamon-spices-applets/issues/4780) - Hourly Weather Redesign
+* Fix [#4709](https://github.com/linuxmint/cinnamon-spices-applets/issues/4709) - the free space between the interface elements disappears
+
+## 3.2.13
+
+* Add Pirate Weather as a provider
+* Remove DarkSky
+* Fix [#4716](https://github.com/linuxmint/cinnamon-spices-applets/issues/4716)
+* Fix [#4719](https://github.com/linuxmint/cinnamon-spices-applets/issues/4719)
+* Fix [#4762](https://github.com/linuxmint/cinnamon-spices-applets/issues/4762)
+* Fix [#4765](https://github.com/linuxmint/cinnamon-spices-applets/issues/4765)
+
 ## 3.2.12
 
 * Minor style changes

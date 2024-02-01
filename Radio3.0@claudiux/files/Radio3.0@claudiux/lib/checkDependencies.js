@@ -40,7 +40,7 @@ const NEEDS_FONTS_SYMBOLA = false;
  *
  * Example: To install the executable 'sox' and the library 'libsox-fmt-mp3.so', we need to install two packages in
  * Debian and derivatives distros (default) and only one package (named sox) in Arch and Fedora distros.
-const DEPENDENCIES = {
+var DEPENDENCIES = {
   "default": [
     ["sox", "/usr/bin/sox",  "sox"],
     ["", "/usr/share/doc/libsox-fmt-mp3/copyright", "libsox-fmt-mp3"]
@@ -54,6 +54,9 @@ const DEPENDENCIES = {
   ],
   "fedora": [
     ["sox", "/usr/bin/sox",  "sox"]
+  ],
+  "openSUSE": [
+    ["sox", "/usr/bin/sox",  "sox"]
   ]
 }
 
@@ -62,7 +65,7 @@ const DEPENDENCIES = {
 var DEPENDENCIES = {
   "default": [
     ["mpv", "/usr/bin/mpv",  "mpv"],
-    ["", "/usr/share/doc/libmpv1/copyright", "libmpv1"],
+    ["wget", "/usr/bin/wget", "wget"],
     ["", "/usr/share/doc/libmpv-dev/copyright", "libmpv-dev"],
     ["pacmd", "/usr/bin/pacmd", "pulseaudio-utils"],
     ["pulseaudio", "/usr/bin/pulseaudio", "pulseaudio"],
@@ -77,6 +80,7 @@ var DEPENDENCIES = {
   ],
   "arch": [
     ["mpv", "/usr/bin/mpv",  "mpv"],
+    ["wget", "/usr/bin/wget", "wget"],
     ["pulseaudio", "/usr/bin/pulseaudio", "pulseaudio"],
     ["sox", "/usr/bin/sox", "sox"],
     ["at", "/usr/bin/at", "at"],
@@ -88,10 +92,10 @@ var DEPENDENCIES = {
   ],
   "debian": [
     ["mpv", "/usr/bin/mpv",  "mpv"],
-    ["", "/usr/lib/x86_64-linux-gnu/libmpv.so", "libmpv?"],
+    ["wget", "/usr/bin/wget", "wget"],
     ["", "/usr/share/doc/libmpv-dev/copyright", "libmpv-dev"],
     ["pacmd", "/usr/bin/pacmd", "pulseaudio-utils"],
-    ["pulseaudio", "/usr/bin/pulseaudio", "pulseaudio"],
+    //~ ["pulseaudio", "/usr/bin/pulseaudio", "pulseaudio"],
     ["sox", "/usr/bin/sox", "sox"],
     ["", "/usr/share/doc/libsox-fmt-all/copyright", "libsox-fmt-all"],
     ["at", "/usr/bin/at", "at"],
@@ -99,11 +103,12 @@ var DEPENDENCIES = {
     ["ffmpeg", "/usr/bin/ffmpeg", "ffmpeg"],
     ["ffmpegthumbnailer", "/usr/bin/ffmpegthumbnailer", "ffmpegthumbnailer"],
     ["yt-dlp", "/usr/bin/yt-dlp", "yt-dlp"],
-    ["", "/usr/lib/python3/dist-packages/polib.py", "python3-polib"]
+    ["", "/usr/lib/python3/dist-packages/polib.py", "python3-polib"],
+    ["", "/usr/share/doc/gir1.2-soup-3.0/copyright", "gir1.2-soup-3.0"]
   ],
   "fedora": [
     ["mpv", "/usr/bin/mpv",  "mpv"],
-    ["pulseaudio", "/usr/bin/pulseaudio", "pulseaudio"],
+    ["wget", "/usr/bin/wget", "wget"],
     ["sox", "/usr/bin/sox", "sox"],
     ["at", "/usr/bin/at", "at"],
     ["notify-send", "/usr/bin/notify-send", "libnotify"],
@@ -112,15 +117,69 @@ var DEPENDENCIES = {
     ["yt-dlp", "/usr/bin/yt-dlp", "yt-dlp"],
     ["", "/usr/lib64/gstreamer-1.0/libgstlibav.so", "gstreamer1-libav"],
     ["", "/usr/share/licenses/python3-polib/LICENSE", "python3-polib"]
+  ],
+  "openSUSE": [
+    ["mpv", "/usr/bin/mpv",  "mpv"],
+    ["wget", "/usr/bin/wget", "wget"],
+    ["sox", "/usr/bin/sox",  "sox"],
+    ["at", "/usr/bin/at", "at"],
+    ["notify-send", "/usr/bin/notify-send", "libnotify"],
+    ["ffmpeg", "/usr/bin/ffmpeg", "ffmpeg"],
+    ["", "/usr/share/licenses/brotli/LICENSE", "brotli"],
+    ["yt-dlp", "/usr/bin/yt-dlp", "yt-dlp"],
+    ["", "/usr/lib64/gstreamer-1.0/libgstlibav.so", "gstreamer-plugins-libav"],
+    ["", "/usr/share/licenses/python310-polib/LICENSE", "python3-polib"]
   ]
 }
 
+// mpv-mpris is only available from Ubuntu 22.04 (LM 21 LTS, Cinnamon 5.4)
+if (versionCompare(GLib.getenv("CINNAMON_VERSION"), "5.4") >= 0) {
+  DEPENDENCIES["default"].push(["", "/usr/lib/mpv-mpris/mpris.so", "mpv-mpris"]);
+  DEPENDENCIES["arch"].push(["", "/usr/lib/mpv-mpris/mpris.so", "mpv-mpris"]);
+  DEPENDENCIES["debian"].push(["", "/usr/lib/mpv-mpris/mpris.so", "mpv-mpris"]);
+  DEPENDENCIES["fedora"].push(["", "/usr/lib64/mpv/mpris.so", "mpv-mpris"]);
+  DEPENDENCIES["openSUSE"].push(["", "/usr/lib64/mpv/mpris.so", "mpv-mpris"]);
+}
+
+// Soup-3 is used instead of Soup-2.4 from LM 21.2, Cinnamon 5.8.
+// Also pipewire from Fedora 39, Cinnamon 5.8.
+if (versionCompare(GLib.getenv("CINNAMON_VERSION"), "5.8") >= 0) {
+  DEPENDENCIES["default"].push(["", "/usr/share/doc/gir1.2-soup-3.0/copyright", "gir1.2-soup-3.0"]);
+  DEPENDENCIES["debian"].push(["", "/usr/share/doc/gir1.2-soup-3.0/copyright", "gir1.2-soup-3.0"]);
+  DEPENDENCIES["arch"].push(["", "/usr/lib/girepository-1.0/Soup-3.0.typelib", "libsoup3"]);
+  DEPENDENCIES["fedora"].push(["", "/usr/share/licenses/libsoup3/COPYING", "libsoup3"]);
+  DEPENDENCIES["fedora"].push(["pipewire", "/usr/bin/pipewire", "pipewire"]);
+  DEPENDENCIES["fedora"].push(["pw-cat", "/usr/bin/pw-cat", "pipewire-utils"]);
+  DEPENDENCIES["fedora"].push(["pipewire-pulse", "/usr/bin/pipewire-pulseaudio", "pipewire-pulseaudio"]);
+  DEPENDENCIES["openSUSE"].push(["", "/usr/share/licenses/libsoup-3_0-0/COPYING", "libsoup-3_0-0"]);
+} else {
+  DEPENDENCIES["debian"].push(["pulseaudio", "/usr/bin/pulseaudio", "pulseaudio"]);
+  DEPENDENCIES["fedora"].push(["pulseaudio", "/usr/bin/pulseaudio", "pulseaudio"]);
+}
 
 // --- Do not modify from here --- //
 if (NEEDS_FONTS_SYMBOLA) {
   DEPENDENCIES["default"].push(["", "/usr/share/fonts/truetype/ancient-scripts/Symbola_hint.ttf", "fonts-symbola"]);
   DEPENDENCIES["debian"].push(["", "/usr/share/fonts/truetype/ancient-scripts/Symbola_hint.ttf", "fonts-symbola"]);
   DEPENDENCIES["fedora"].push(["", "/usr/share/fonts/gdouros-symbola/Symbola.ttf", "gdouros-symbola-fonts"]);
+  DEPENDENCIES["openSUSE"].push(["", "/usr/share/fonts/truetype/Symbola.ttf", "gdouros-symbola-fonts"]);
+}
+
+function versionCompare(left, right) {
+  if (typeof left + typeof right != 'stringstring')
+    return false;
+  var a = left.split('.'),
+      b = right.split('.'),
+      i = 0,
+      len = Math.max(a.length, b.length);
+  for (; i < len; i++) {
+    if ((a[i] && !b[i] && parseInt(a[i]) > 0) || (parseInt(a[i]) > parseInt(b[i]))) {
+      return 1;
+    } else if ((b[i] && !a[i] && parseInt(b[i]) > 0) || (parseInt(a[i]) < parseInt(b[i]))) {
+      return -1;
+    }
+  }
+  return 0;
 }
 
 const _ = function(str) {
@@ -135,14 +194,16 @@ const UPDATE = {
   "default": "sudo apt-get update",
   "arch": "sudo pacman -Syu",
   "debian": "apt-get update",
-  "fedora": "sudo dnf update"
+  "fedora": "sudo dnf update",
+  "openSUSE": ""
 }
 
 const INSTALL = {
   "default": "sudo apt-get install",
   "arch": "sudo pacman -S",
   "debian": "apt-get install",
-  "fedora": "sudo dnf install"
+  "fedora": "sudo dnf install",
+  "openSUSE": "sudo zypper --non-interactive install"
 }
 
 const HOME_DIR = GLib.get_home_dir();
@@ -220,6 +281,10 @@ function isDebian() {
   return DISTRO() === 'debian'
 } // End of isDebian
 
+function isOpenSUSE() {
+  return GLib.find_program_in_path("zypper")
+}
+
 function is_apturl_present() {
   return GLib.find_program_in_path("apturl")
 } // End of is_apturl_present
@@ -231,11 +296,16 @@ function get_distro() {
     case "arch":
     case "fedora":
       return distro;
+    case "linuxmint":
+    case "ubuntu":
+      return "default";
     default:
       if (isArchLinux()) {
         return "arch";
       } else if (isFedora()) {
         return "fedora";
+      } else if (isOpenSUSE()) {
+        return "openSUSE"
       }
       return "default"; // linuxmint or ubuntu
   }
@@ -285,6 +355,7 @@ Dependencies.prototype = {
       Gio.file_new_for_path("/usr/share/fonts/truetype/ancient-scripts/Symbola_hint.ttf").query_exists(null) ||
       Gio.file_new_for_path("/usr/share/fonts/TTF/Symbola.ttf").query_exists(null) ||
       Gio.file_new_for_path("/usr/share/fonts/gdouros-symbola/Symbola.ttf").query_exists(null) ||
+      Gio.file_new_for_path("/usr/share/fonts/truetype/Symbola.ttf").query_exists(null) ||
       Gio.file_new_for_path("%s/.local/share/fonts/Symbola_Hinted.ttf".format(HOME_DIR)).query_exists(null) ||
       Gio.file_new_for_path("%s/.local/share/fonts/Symbola.ttf".format(HOME_DIR)).query_exists(null) ||
       Gio.file_new_for_path("%s/.local/share/fonts/Symbola.otf".format(HOME_DIR)).query_exists(null)
@@ -328,12 +399,15 @@ Dependencies.prototype = {
       let _isFedora = isFedora();
       let _isArchlinux = isArchLinux();
       let _isDebian = isDebian();
+      let _isOpenSUSE = isOpenSUSE();
       //let _apt_update = _isFedora ? "sudo dnf update" : _isArchlinux ? "" : _isDebian ? "apt update" : "sudo apt update";
       let distro = get_distro();
       let _apt_update = UPDATE[distro];
       let _install = INSTALL[distro];
       let _pkg_to_install = get_pkg_to_install();
       let _and = " \\\\&\\\\& ";
+      if (_apt_update.length === 0)
+        _and = "";
       let _apt_install = "%s %s".format(_install, _pkg_to_install.join(" "));
       //var _apt_install = _isFedora ? "sudo dnf install libnotify gdouros-symbola-fonts" : _isArchlinux ? "sudo pacman -Syu libnotify" : _isDebian ? "apt install libnotify-bin fonts-symbola" : "sudo apt install libnotify-bin fonts-symbola";
       let criticalMessagePart1 = _("You appear to be missing some of the programs required for this applet to have all its features.");

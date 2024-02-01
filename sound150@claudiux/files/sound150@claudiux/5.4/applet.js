@@ -9,6 +9,11 @@ const Clutter = imports.gi.Clutter;
 const St = imports.gi.St;
 const PopupMenu = imports.ui.popupMenu;
 const GLib = imports.gi.GLib;
+const {
+  PixelFormat
+} = imports.gi.Cogl; //Cogl
+const Gdk = imports.gi.Gdk;
+const GdkPixbuf = imports.gi.GdkPixbuf;
 const Cvc = imports.gi.Cvc;
 const Tooltips = imports.ui.tooltips;
 const Main = imports.ui.main;
@@ -16,6 +21,7 @@ const Settings = imports.ui.settings;
 const Slider = imports.ui.slider;
 const Gettext = imports.gettext; // Needed for translations
 const Extension = imports.ui.extension; // Needed to reload this applet
+const Pango = imports.gi.Pango;
 
 const UUID = "sound150@claudiux";
 const HOME_DIR = GLib.get_home_dir();
@@ -63,9 +69,25 @@ function logError(error) {
     global.logError("[" + UUID + "]: " + error)
 }
 
+// Text wrapper
+const formatTextWrap = (text, maxLineLength) => {
+  const words = text.replace(/[\r\n]+/g, ' ').split(' ');
+  let lineLength = 0;
+
+  // use functional reduce, instead of for loop
+  return words.reduce((result, word) => {
+    if (lineLength + word.length >= maxLineLength) {
+      lineLength = word.length;
+      return result + `\n${word}`; // don't add spaces upfront
+    } else {
+      lineLength += word.length + (result ? 1 : 0);
+      return result ? result + ` ${word}` : `${word}`; // add space only when needed
+    }
+  }, '');
+}
 /* global values */
-let players_without_seek_support = ['spotify', 'totem', 'xplayer', 'gnome-mplayer', 'pithos',
-    'smplayer'];
+let players_without_seek_support = ['telegram desktop', 'spotify', 'totem', 'xplayer', 'gnome-mplayer', 'pithos',
+    'smplayer', 'mpv'];
 let players_with_seek_support = [
     'clementine', 'banshee', 'rhythmbox', 'rhythmbox3', 'pragha', 'quodlibet',
     'amarok', 'xnoise', 'gmusicbrowser', 'vlc', 'qmmp', 'deadbeef', 'audacious'];
@@ -76,7 +98,7 @@ x = _("Stopped");
 
 let VOLUME_ADJUSTMENT_STEP = 0.02; /* Volume adjustment step in % */
 
-const ICON_SIZE = 28;
+const ICON_SIZE = 28*global.ui_scale;
 
 const CINNAMON_DESKTOP_SOUNDS = "org.cinnamon.desktop.sound";
 const MAXIMUM_VOLUME_KEY = "maximum-volume";
@@ -138,15 +160,15 @@ class VolumeSlider extends PopupMenu.PopupSliderMenuItem {
         this.app_icon = app_icon;
         if (this.app_icon == null) {
             this.iconName = this.isMic ? "microphone-sensitivity-muted" : "audio-volume-muted";
-            this.icon = new St.Icon({ icon_name: this.iconName, icon_type: St.IconType.SYMBOLIC, icon_size: 16 });
+            this.icon = new St.Icon({icon_name: this.iconName, icon_type: St.IconType.SYMBOLIC, icon_size: 16*global.ui_scale});
         }
         else {
-            this.icon = new St.Icon({ icon_name: this.app_icon, icon_type: St.IconType.FULLCOLOR, icon_size: 16 });
+            this.icon = new St.Icon({icon_name: this.app_icon, icon_type: St.IconType.FULLCOLOR, icon_size: 16*global.ui_scale});
         }
 
         this.removeActor(this._slider);
-        this.addActor(this.icon, { span: 0 });
-        this.addActor(this._slider, { span: -1, expand: true });
+        this.addActor(this.icon, {span: 0});
+        this.addActor(this._slider, {span: -1, expand: true});
 
         this.connectWithStream(stream);
     }
@@ -379,14 +401,15 @@ class Seeker extends Slider.Slider {
                 this._timerTicker = 0;
                 this._getPosition();
             }
-            return true;
+            return GLib.SOURCE_CONTINUE;
         }
 
-        return false;
+        this._timeoutId = 0;
+        return GLib.SOURCE_REMOVE;
     }
 
     _updateTimer() {
-        if (this._timeoutId !== 0) {
+        if (this._timeoutId > 0) {
             Mainloop.source_remove(this._timeoutId);
             this._timeoutId = 0;
         }
@@ -449,12 +472,14 @@ class Seeker extends Slider.Slider {
     }
 
     destroy() {
-        if (this._timeoutId != 0) {
+        if (this._timeoutId > 0) {
             Mainloop.source_remove(this._timeoutId);
             this._timeoutId = 0;
         }
-        if (this._seekChangedId)
+        if (this._seekChangedId) {
             this._mediaServerPlayer.disconnectSignal(this._seekChangedId);
+            this._seekChangedId = 0;
+        }
 
         this.disconnectAll();
         this._mediaServerPlayer = null;
@@ -475,9 +500,11 @@ class StreamMenuSection extends PopupMenu.PopupMenuSection {
         }
 
         // Trim stream name
-        if (name.length > 20) {
-            name = name.substring(0, 16) + "... ";
-        }
+        //~ if (name.length > 20) {
+            //~ name = name.substring(0, 16) + "... ";
+        //~ }
+        name = formatTextWrap(name, 20);
+        //~ log("StreamMenuSection: name:"+name, true);
 
         // Special cases
         if (name === "Banshee") {
@@ -486,15 +513,22 @@ class StreamMenuSection extends PopupMenu.PopupMenuSection {
         else if (name === "Spotify") {
             iconName = "spotify";
         }
-        if (name === "VBox") {
+        else if (name === "VBox") {
             name = "Virtualbox";
             iconName = "virtualbox";
+        }
+        else if (name === "Firefox") {
+            iconName = "firefox";
+        }
+        else if (name === "Mpv") {
+            iconName = "mpv"
         }
         else if (iconName === "audio") {
             iconName = "audio-x-generic";
         }
 
         let slider = new VolumeSlider(applet, stream, name, iconName);
+        slider._slider.style = "min-width: 6em;";
         this.addMenuItem(slider);
     }
 }
@@ -551,7 +585,7 @@ class Player extends PopupMenu.PopupMenuSection {
 
         // Player info
         this._playerBox = new St.BoxLayout();
-        this.playerIcon = new St.Icon({ icon_type: St.IconType.SYMBOLIC, style_class: "popup-menu-icon" });
+        this.playerIcon = new St.Icon({icon_type: St.IconType.SYMBOLIC, style_class: "popup-menu-icon"});
         this.playerLabel = new St.Label({
             y_expand: true, y_align: Clutter.ActorAlign.CENTER,
             x_expand: true, x_align: Clutter.ActorAlign.START
@@ -570,14 +604,14 @@ class Player extends PopupMenu.PopupMenuSection {
         this.vertBox.add_actor(this._playerBox);
 
         // Cover Box (art + track info)
-        this._trackCover = new St.Bin({ x_align: St.Align.MIDDLE });
+        this._trackCover = new St.Bin({x_align: St.Align.MIDDLE});
         this._trackCoverFile = this._trackCoverFileTmp = false;
         this.coverBox = new Clutter.Box();
-        let l = new Clutter.BinLayout({ x_align: Clutter.BinAlignment.FILL, y_align: Clutter.BinAlignment.END });
+        let l = new Clutter.BinLayout({x_align: Clutter.BinAlignment.FILL, y_align: Clutter.BinAlignment.END});
         this.coverBox.set_layout_manager(l);
 
         // Cover art
-        this.cover = new St.Icon({ icon_name: "media-optical", icon_size: 300, icon_type: St.IconType.FULLCOLOR });
+        this.cover = new St.Icon({icon_name: "media-optical", icon_size: 300*global.ui_scale, icon_type: St.IconType.FULLCOLOR});
         this.coverBox.add_actor(this.cover);
 
         this._cover_load_handle = 0;
@@ -587,15 +621,21 @@ class Player extends PopupMenu.PopupMenuSection {
         this._artist = _("Unknown Artist");
         this._album = _("Unknown Album");
         this._title = _("Unknown Title");
-        this.trackInfo = new St.BoxLayout({ style_class: 'sound-player-overlay', important: true, vertical: true });
+        this.trackInfo = new St.BoxLayout({style_class: 'sound-player-overlay', style: 'height: auto;', important: true, vertical: true});
         let artistInfo = new St.BoxLayout();
         let artistIcon = new St.Icon({ icon_type: St.IconType.SYMBOLIC, icon_name: "system-users", style_class: 'popup-menu-icon' });
-        this.artistLabel = new St.Label({ text: this._artist });
+        this.artistLabel = new St.Label({text:this._artist});
+        this.artistLabel.clutterText.line_wrap = true;
+        this.artistLabel.clutterText.line_wrap_mode = Pango.WrapMode.WORD_CHAR;
+        this.artistLabel.clutterText.ellipsize = Pango.EllipsizeMode.NONE;
         artistInfo.add_actor(artistIcon);
         artistInfo.add_actor(this.artistLabel);
         let titleInfo = new St.BoxLayout();
         let titleIcon = new St.Icon({ icon_type: St.IconType.SYMBOLIC, icon_name: "audio-x-generic", style_class: 'popup-menu-icon' });
-        this.titleLabel = new St.Label({ text: this._title });
+        this.titleLabel = new St.Label({text:this._title});
+        this.titleLabel.clutterText.line_wrap = true;
+        this.titleLabel.clutterText.line_wrap_mode = Pango.WrapMode.WORD_CHAR;
+        this.titleLabel.clutterText.ellipsize = Pango.EllipsizeMode.NONE;
         titleInfo.add_actor(titleIcon);
         titleInfo.add_actor(this.titleLabel);
         this.trackInfo.add_actor(artistInfo);
@@ -606,7 +646,7 @@ class Player extends PopupMenu.PopupMenuSection {
         this.vertBox.add_actor(this._trackCover);
 
         // Playback controls
-        let trackControls = new St.Bin({ x_align: St.Align.MIDDLE });
+        let trackControls = new St.Bin({x_align: St.Align.MIDDLE});
         this._prevButton = new ControlButton("media-skip-backward",
             _("Previous"),
             () => this._mediaServerPlayer.PreviousRemote());
@@ -769,10 +809,15 @@ class Player extends PopupMenu.PopupMenuSection {
         else
             this._album = _("Unknown Album");
 
-        if (metadata["xesam:title"])
+        if (metadata["xesam:title"]) {
             this._title = metadata["xesam:title"].unpack();
-        else
+            if (this._title.includes(" - ") && this._artist == _("Unknown Artist")) {
+                [this._artist, this._title] = this._title.split(" - ");
+                this.artistLabel.set_text(this._artist);
+            }
+        } else {
             this._title = _("Unknown Title");
+        }
         this.titleLabel.set_text(this._title);
 
         let change = false;
@@ -900,20 +945,29 @@ class Player extends PopupMenu.PopupMenuSection {
     }
 
     _showCover(cover_path) {
-        if (!cover_path || !GLib.file_test(cover_path, GLib.FileTest.EXISTS)) {
-            this.cover = new St.Icon({ style_class: 'sound-player-generic-coverart', important: true, icon_name: "media-optical", icon_size: 300, icon_type: St.IconType.FULLCOLOR });
+        if (! cover_path || ! GLib.file_test(cover_path, GLib.FileTest.EXISTS)) {
+            this.cover = new St.Icon({style_class: 'sound-player-generic-coverart', important: true, icon_name: "media-optical", icon_size: 300, icon_type: St.IconType.FULLCOLOR});
             cover_path = null;
         }
         else {
             this._cover_path = cover_path;
             this._cover_load_handle = St.TextureCache.get_default().load_image_from_file_async(cover_path, 300, 300, this._on_cover_loaded.bind(this));
-
-            if (this._applet.keepAlbumAspectRatio) {
-                this.cover = new Clutter.Texture({ width: 300, keep_aspect_ratio: true, filter_quality: 2, filename: cover_path });
-            }
-            else {
-                this.cover = new Clutter.Texture({ width: 300, height: 300, keep_aspect_ratio: false, filter_quality: 2, filename: cover_path });
-            }
+            let image = new Clutter.Image();
+            let pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_size(this._cover_path, 300, 300);
+            image.set_data(
+                pixbuf.get_pixels(),
+                pixbuf.get_has_alpha() ? PixelFormat.RGBA_8888 : PixelFormat.RGBA_888,
+                pixbuf.get_width(),
+                pixbuf.get_height(),
+                pixbuf.get_rowstride()
+            );
+            this.cover = image.get_texture();
+            //~ if (this._applet.keepAlbumAspectRatio) {
+                //~ this.cover = new Clutter.Texture({ width: 300, keep_aspect_ratio: true, filter_quality: 2, filename: cover_path });
+            //~ }
+            //~ else {
+                //~ this.cover = new Clutter.Texture({ width: 300, height: 300, keep_aspect_ratio: false, filter_quality: 2, filename: cover_path });
+            //~ }
         }
     }
 
@@ -923,11 +977,13 @@ class Player extends PopupMenu.PopupMenuSection {
             return;
         }
 
-        this.coverBox.remove_actor(this.cover);
+        try {
+            this.coverBox.remove_actor(this.cover);
+        } catch(e) {}
 
         // Make sure any oddly-shaped album art doesn't affect the height of the applet popup
         // (and move the player controls as a result).
-        actor.margin_bottom = 300 - actor.height;
+        actor.margin_bottom = (300 - actor.height)*global.ui_scale;
 
         this.cover = actor;
         this.coverBox.add_actor(this.cover);
@@ -941,7 +997,8 @@ class Player extends PopupMenu.PopupMenuSection {
     }
 
     destroy() {
-        this._seeker.destroy();
+        if (this._seeker)
+            this._seeker.destroy();
         if (this._prop)
             this._prop.disconnectSignal(this._propChangedId);
 
@@ -958,13 +1015,14 @@ class MediaPlayerLauncher extends PopupMenu.PopupBaseMenuItem {
         this.label = new St.Label({ text: app.get_name() });
         this.addActor(this.label);
         this._icon = app.create_icon_texture(ICON_SIZE);
-        this.addActor(this._icon, { expand: false });
+        this._icon_bin = new St.Bin({ x_align: St.Align.END, child: this._icon });
+        this.addActor(this._icon_bin, { expand: true, span: -1, align: St.Align.END });
+
         this.connect("activate", (event) => this._onActivate(event));
     }
 
     _onActivate(event) {
         let _time = event.time;
-        log("_time = " + _time);
         this._app.activate_full(-1, _time);
     }
 }
@@ -973,7 +1031,7 @@ class Sound150Applet extends Applet.TextIconApplet {
     constructor(metadata, orientation, panel_height, instanceId) {
         super(orientation, panel_height, instanceId);
 
-        this.defaultColor = null;
+        //~ this.defaultColor = null;
 
         this.setAllowedLayout(Applet.AllowedLayout.BOTH);
 
@@ -981,6 +1039,7 @@ class Sound150Applet extends Applet.TextIconApplet {
         this.settings = new Settings.AppletSettings(this, metadata.uuid, instanceId);
         this.settings.bind("showtrack", "showtrack", this.on_settings_changed);
         this.settings.bind("middleClickAction", "middleClickAction");
+        this.settings.bind("middleShiftClickAction", "middleShiftClickAction");
         this.settings.bind("horizontalScroll", "horizontalScroll")
         this.settings.bind("showalbum", "showalbum", this.on_settings_changed);
         this.settings.bind("truncatetext", "truncatetext", this.on_settings_changed);
@@ -991,7 +1050,7 @@ class Sound150Applet extends Applet.TextIconApplet {
         });
 
         this.settings.bind("playerControl", "playerControl", this.on_settings_changed);
-        this.settings.bind("extendedPlayerControl", "extendedPlayerControl", function () {
+        this.settings.bind("extendedPlayerControl", "extendedPlayerControl", function() {
             for (let i in this._players)
                 this._players[i].onSettingsChanged();
         });
@@ -1011,10 +1070,24 @@ class Sound150Applet extends Applet.TextIconApplet {
         this.settings.bind("magneticOn", "magneticOn", () => this._on_sound_settings_change());
 
         this.settings.bind("adaptColor", "adaptColor", () => this._on_sound_settings_change());
+        this.settings.bind("color101_115", "color101_115", () => this._on_sound_settings_change());
+        this.settings.bind("color116_130", "color116_130", () => this._on_sound_settings_change());
+        this.settings.bind("color131_150", "color131_150", () => this._on_sound_settings_change());
+
 
         this.settings.bind("tooltipShowVolume", "tooltipShowVolume", this.on_settings_changed);
         this.settings.bind("tooltipShowPlayer", "tooltipShowPlayer", this.on_settings_changed);
         this.settings.bind("tooltipShowArtistTitle", "tooltipShowArtistTitle", this.on_settings_changed);
+
+        this.settings.bind("alwaysCanChangeMic", "alwaysCanChangeMic", this.on_settings_changed);
+
+        this.settings.bind("volume", "volume");
+        this.settings.bind("showVolumeLevelNearIcon", "showVolumeLevelNearIcon", this.volume_near_icon);
+        this.settings.bind("volume-mute", "volume_mute", this._setKeybinding);
+        this.settings.bind("volume-up", "volume_up", this._setKeybinding);
+        this.settings.bind("volume-down", "volume_down", this._setKeybinding);
+
+        Main.themeManager.connect("theme-set", Lang.bind(this, this._theme_set));
 
         this.menuManager = new PopupMenu.PopupMenuManager(this);
         this.menu = new Applet.AppletPopupMenu(this, orientation);
@@ -1101,7 +1174,10 @@ class Sound150Applet extends Applet.TextIconApplet {
         this.mute_in_switch = new PopupMenu.PopupSwitchIconMenuItem(_("Mute input"), false, "microphone-sensitivity-muted", St.IconType.SYMBOLIC);
         this._applet_context_menu.addMenuItem(this.mute_out_switch);
         this._applet_context_menu.addMenuItem(this.mute_in_switch);
-        this.mute_in_switch.actor.hide();
+        if (!this.alwaysCanChangeMic)
+            this.mute_in_switch.actor.hide();
+        else
+            this.mute_in_switch.actor.show();
 
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
@@ -1147,7 +1223,24 @@ class Sound150Applet extends Applet.TextIconApplet {
     }
 
     _setKeybinding() {
+        Main.keybindingManager.removeHotKey("media-keys-4");
+        Main.keybindingManager.removeHotKey("media-keys-2");
+
         Main.keybindingManager.addHotKey("sound-open-" + this.instance_id, this.keyOpen, Lang.bind(this, this._openMenu));
+
+        Main.keybindingManager.removeHotKey("raise-volume");
+        Main.keybindingManager.removeHotKey("lower-volume");
+        Main.keybindingManager.removeHotKey("volume-mute");
+        Main.keybindingManager.removeHotKey("volume-up");
+        Main.keybindingManager.removeHotKey("volume-down");
+        Main.keybindingManager.addHotKey("raise-volume-" + this.instance_id, "AudioRaiseVolume", () => this._volumeChange(Clutter.ScrollDirection.UP));
+        Main.keybindingManager.addHotKey("lower-volume-" + this.instance_id, "AudioLowerVolume", () => this._volumeChange(Clutter.ScrollDirection.DOWN));
+        if (this.volume_mute.length > 2)
+            Main.keybindingManager.addHotKey("volume-mute", this.volume_mute, (...args) => this._mutedChanged(...args));
+        if (this.volume_up.length > 2)
+            Main.keybindingManager.addHotKey("volume-up", this.volume_up, () => this._volumeChange(Clutter.ScrollDirection.UP));
+        if (this.volume_down.length > 2)
+            Main.keybindingManager.addHotKey("volume-down", this.volume_down, () => this._volumeChange(Clutter.ScrollDirection.DOWN));
     }
 
     _on_sound_settings_change() {
@@ -1167,15 +1260,32 @@ class Sound150Applet extends Applet.TextIconApplet {
         else
             this.setAppletTextIcon();
 
+       if (this.alwaysCanChangeMic)
+            this.mute_in_switch.actor.show();
+        else if (this._recordingAppsNum === 0)
+            this.mute_in_switch.actor.hide();
+
         this._changeActivePlayer(this._activePlayer);
+    }
+
+    on_applet_added_to_panel() {
+        this.volume_near_icon()
     }
 
     on_applet_removed_from_panel() {
         Main.keybindingManager.removeHotKey("sound-open-" + this.instance_id);
+
+        Main.keybindingManager.removeHotKey("raise-volume-" + this.instance_id);
+        Main.keybindingManager.removeHotKey("lower-volume-" + this.instance_id);
+        Main.keybindingManager.removeHotKey("volume-mute");
+        Main.keybindingManager.removeHotKey("volume-up");
+        Main.keybindingManager.removeHotKey("volume-down");
+
         if (this.hideSystray)
             this.unregisterSystrayIcons();
         if (this._iconTimeoutId) {
             Mainloop.source_remove(this._iconTimeoutId);
+            this._iconTimeoutId = 0;
         }
 
         this._dbus.disconnectSignal(this._ownerChangedId);
@@ -1209,22 +1319,23 @@ class Sound150Applet extends Applet.TextIconApplet {
         if (!this._input)
             return;
 
-        if (this._input.is_muted) {
-            this._input.change_is_muted(false);
-            this.mute_in_switch.setToggleState(false);
-        } else {
-            this._input.change_is_muted(true);
-            this.mute_in_switch.setToggleState(true);
-        }
+        let newStatus = !this._input.is_muted;
+        this._input.change_is_muted(newStatus);
+        this.mute_in_switch.setToggleState(newStatus);
     }
 
     _onScrollEvent(actor, event) {
-        let direction = event.get_scroll_direction();
+        const direction = event.get_scroll_direction();
 
         if (direction == Clutter.ScrollDirection.SMOOTH) {
             return Clutter.EVENT_PROPAGATE;
         }
 
+        this._volumeChange(direction);
+        this.volume_near_icon()
+    }
+
+    _volumeChange(direction) {
         let currentVolume = this._output.volume;
         let volumeChange = false;
         let player = this._players[this._activePlayer];
@@ -1265,26 +1376,60 @@ class Sound150Applet extends Applet.TextIconApplet {
         if (volumeChange) {
             this._output.push_volume();
             this._notifyVolumeChange(this._output);
+            this.setAppletTooltip();
             this._applet_tooltip.show();
+            let volume = this.volume.slice(0, -1);
+            let icon_name = "audio-volume";
+            if (volume <1) icon_name += "-muted";
+            else if (volume < 33) icon_name += "-low";
+            else if (volume < 67) icon_name += "-medium";
+            else icon_name += "-high";
+            icon_name += "-symbolic";
+            let icon = Gio.Icon.new_for_string(icon_name);
+            Main.osdWindowManager.show(-1, icon, volume, null);
+            var intervalId = null;
+            intervalId = Util.setInterval(() => {
+                this._applet_tooltip.hide();
+                Util.clearInterval(intervalId);
+                return false
+            }, 5000);
         } else {
             this._applet_tooltip.hide();
         }
+        this.volume_near_icon()
     }
 
     _onButtonPressEvent(actor, event) {
         let buttonId = event.get_button();
+        let modifiers = Cinnamon.get_event_state(event);
+        let shiftPressed = (modifiers & Clutter.ModifierType.SHIFT_MASK);
+        let ctrlPressed = (modifiers & Clutter.ModifierType.CONTROL_MASK);
 
         // mute or play / pause players on middle click
         if (buttonId === 2) {
-            if (this.middleClickAction === "mute") {
-                this._toggle_out_mute();
-                this._toggle_in_mute();
-            } else if (this.middleClickAction === "out_mute")
-                this._toggle_out_mute();
-            else if (this.middleClickAction === "in_mute")
-                this._toggle_in_mute();
-            else if (this.middleClickAction === "player")
-                this._players[this._activePlayer]._mediaServerPlayer.PlayPauseRemote();
+            if (shiftPressed || ctrlPressed) {
+                if (this.middleShiftClickAction === "mute") {
+                    if (this._input && this._output && this._output.is_muted === this._input.is_muted)
+                        this._toggle_in_mute();
+                    this._toggle_out_mute();
+                } else if (this.middleShiftClickAction === "out_mute")
+                    this._toggle_out_mute();
+                else if (this.middleShiftClickAction === "in_mute")
+                    this._toggle_in_mute();
+                else if (this.middleShiftClickAction === "player")
+                    this._players[this._activePlayer]._mediaServerPlayer.PlayPauseRemote();
+            } else {
+                if (this.middleClickAction === "mute") {
+                    if (this._input && this._output && this._output.is_muted === this._input.is_muted)
+                        this._toggle_in_mute();
+                    this._toggle_out_mute();
+                } else if (this.middleClickAction === "out_mute")
+                    this._toggle_out_mute();
+                else if (this.middleClickAction === "in_mute")
+                    this._toggle_in_mute();
+                else if (this.middleClickAction === "player")
+                    this._players[this._activePlayer]._mediaServerPlayer.PlayPauseRemote();
+            }
         } else if (buttonId === 8) { // previous and next track on mouse buttons 4 and 5 (8 and 9 by X11 numbering)
             this._players[this._activePlayer]._mediaServerPlayer.PreviousRemote();
         } else if (buttonId === 9) {
@@ -1309,7 +1454,7 @@ class Sound150Applet extends Applet.TextIconApplet {
     setIcon(icon, source) {
         if (this._iconTimeoutId) {
             Mainloop.source_remove(this._iconTimeoutId);
-            this._iconTimeoutId = null;
+            this._iconTimeoutId = 0;
         }
 
         // save the icon
@@ -1325,7 +1470,7 @@ class Sound150Applet extends Applet.TextIconApplet {
                 // if we have an active player, but are changing the volume, show the output icon and after three seconds change back to the player icon
                 this.set_applet_icon_symbolic_name(this._outputIcon);
                 this._iconTimeoutId = Mainloop.timeout_add_seconds(OUTPUT_ICON_SHOW_TIME_SECONDS, () => {
-                    this._iconTimeoutId = null;
+                    this._iconTimeoutId = 0;
                     this.setIcon();
                 });
             } else {
@@ -1339,6 +1484,7 @@ class Sound150Applet extends Applet.TextIconApplet {
             // if we have no active player show the output icon
             this.set_applet_icon_symbolic_name(this._outputIcon);
         }
+        this.volume_near_icon()
     }
 
     setAppletIcon(player, path) {
@@ -1369,17 +1515,19 @@ class Sound150Applet extends Applet.TextIconApplet {
     setAppletText(player) {
         let title_text = "";
         if (this.showtrack && player && player._playerStatus == 'Playing') {
-            if (player._artist == "Unknown Artist") {
+            if (player._artist == _("Unknown Artist")) { // should it be translated?
                 title_text = player._title;
             }
             else {
                 title_text = player._title + ' - ' + player._artist;
             }
-            if (this.truncatetext < title_text.length) {
-                title_text = title_text.substr(0, this.truncatetext) + "...";
+            const glyphs = Util.splitByGlyph(title_text);
+            if (glyphs.length > this.truncatetext) {
+                title_text = glyphs.slice(0, this.truncatetext - 3).join("") + "...";
             }
         }
         this.set_applet_label(title_text);
+        //~ log("setAppletText: title_text:\n"+title_text, true)
     }
 
     setAppletTextIcon(player, icon) {
@@ -1410,6 +1558,7 @@ class Sound150Applet extends Applet.TextIconApplet {
             }
         }
         this.set_applet_tooltip(tooltips.join("\n"));
+        this.volume_near_icon();
     }
 
     _isInstance(busName) {
@@ -1627,27 +1776,30 @@ class Sound150Applet extends Applet.TextIconApplet {
         }
     }
 
+    _theme_set() {
+        this._on_reload_this_applet_pressed();
+    }
+
     _outputValuesChanged(actor, iconName, percentage) {
         this.setIcon(iconName, "output");
         this.mute_out_switch.setIconSymbolicName(iconName);
         this.volume = percentage;
         this.setAppletTooltip();
 
-        if (this.defaultColor === null) {
-            // this.actor.set_style("applet-box");
-            let themeNode = this.actor.get_theme_node();
-            this.defaultColor = themeNode.get_foreground_color();
+        if (!this.themeNode) {
+            this.themeNode = this.actor.get_theme_node();
         }
+        this.defaultColor = this.themeNode.get_foreground_color();
         let color = "rgba(" + this.defaultColor.red + "," + this.defaultColor.green + "," + this.defaultColor.blue + "," + this.defaultColor.alpha + ")";
 
         if (this.adaptColor) {
             let pc = Math.round(percentage.split("%")[0]);
             if (pc > 130)
-                color = "red";
+                color = this.color131_150; //"red";
             else if (pc > 115)
-                color = "orange";
+                color = this.color116_130; //"orange";
             else if (pc > 100)
-                color = "yellow";
+                color = this.color101_115; // "yellow";
         }
         let _style = "color: %s;".format(color);
         this.actor.style = _style;
@@ -1787,6 +1939,9 @@ class Sound150Applet extends Applet.TextIconApplet {
                         this._inputSection.actor.hide();
                         this.mute_in_switch.actor.hide();
                     }
+
+                    if (this.alwaysCanChangeMic)
+                        this.mute_in_switch.actor.show();
                 }
                 this._streams.splice(i, 1);
                 break;
@@ -1815,6 +1970,23 @@ class Sound150Applet extends Applet.TextIconApplet {
     _onSetApmlificationPressed() {
         let command = "cinnamon-settings sound -t 4";
         Util.spawnCommandLine(command);
+    }
+
+    volume_near_icon() {
+        if (this.showVolumeLevelNearIcon) {
+            this._applet_label.set_text(""+this.volume);
+            this.hide_applet_label(false);
+        } else {
+            this._applet_label.set_text("");
+            this.hide_applet_label(true);
+        }
+    }
+
+    _reset_colors() {
+        this.color101_115 = "yellow";
+        this.color116_130 = "orange";
+        this.color131_150 = "red";
+        this._on_sound_settings_change()
     }
 }
 

@@ -30,10 +30,16 @@ With Radio3.0 you can:
 
   * Launch and use _Pulse Effects_ (if installed) for amazing sound experience.
 
-  * Modify the volume of the radio, independent of the general sound volume.
+  * Modify the volume of the radio, independent of the general sound volume. This volume level can be displayed near the icon.
 
 
-Details, help and FAQ can be found in the Manual.
+Details, help and FAQ can be found in the [Manual](https://github.com/linuxmint/cinnamon-spices-applets/blob/master/Radio3.0%40claudiux/files/Radio3.0%40claudiux/help/MANUAL.md).
+
+## Translations
+
+[Status of translations](https://github.com/linuxmint/cinnamon-spices-applets/blob/translation-status-tables/.translation-tables/tables/Radio3.0%40claudiux.md#)
+
+
 
 
 

@@ -10,6 +10,8 @@ const {
   reloadExtension,
   Type
 } = imports.ui.extension; //Extension
+const { restartCinnamon } = imports.ui.main; // Main
+
 const St = imports.gi.St;
 const PopupMenu = imports.ui.popupMenu; // ++ Needed for menus
 
@@ -90,6 +92,9 @@ class LGS extends Applet.TextIconApplet {
         // Applet label on panel
         this.set_label();
 
+        let _tooltip = _("Middle-click: \n") + _("Show .xsession-errors");
+        this.set_applet_tooltip(_tooltip);
+
         this.applet_running = true;
     }; // End of constructor
 
@@ -114,7 +119,7 @@ class LGS extends Applet.TextIconApplet {
     //++ Handler for when the applet is clicked.
     on_applet_clicked(event) {
         this.makeMenu();
-        this.menu.toggle();
+        if (!this.menu.isOpen) this.menu.toggle();
     }; // End of on_applet_clicked
 
     get_active_spices(type) {
@@ -175,7 +180,10 @@ class LGS extends Applet.TextIconApplet {
         });
         itemReloadCinnamon.connect(
             "activate",
-            () => global.reexec_self()
+            () => {
+                if (this.menu.isOpen) this.menu.close();
+                restartCinnamon(true)
+            }
         );
 
         this.menu.addMenuItem(itemReloadCinnamon);
@@ -194,7 +202,8 @@ class LGS extends Applet.TextIconApplet {
             let s =  new PopupMenu.PopupMenuItem(applet, {
                 reactive: true
             });
-            s.connect("activate", function() {
+            s.connect("activate", () => {
+                if (this.menu.isOpen) this.menu.close();
                 reloadExtension(applet, Type.APPLET)
             });
             this.subMenuReloadApplets.menu.addMenuItem(s)
@@ -208,7 +217,8 @@ class LGS extends Applet.TextIconApplet {
             let s =  new PopupMenu.PopupMenuItem(desklet, {
                 reactive: true
             });
-            s.connect("activate", function() {
+            s.connect("activate", () => {
+                if (this.menu.isOpen) this.menu.close();
                 reloadExtension(desklet, Type.DESKLET)
             });
             this.subMenuReloadDesklets.menu.addMenuItem(s)
@@ -222,7 +232,8 @@ class LGS extends Applet.TextIconApplet {
             let s =  new PopupMenu.PopupMenuItem(extension, {
                 reactive: true
             });
-            s.connect("activate", function() {
+            s.connect("activate", () => {
+                if (this.menu.isOpen) this.menu.close();
                 reloadExtension(extension, Type.EXTENSION)
             });
             this.subMenuReloadExtensions.menu.addMenuItem(s)
@@ -242,7 +253,8 @@ class LGS extends Applet.TextIconApplet {
             let s =  new PopupMenu.PopupMenuItem(applet, {
                 reactive: true
             });
-            s.connect("activate", function() {
+            s.connect("activate", () => {
+                if (this.menu.isOpen) this.menu.close();
                 Util.spawnCommandLineAsync('bash -c "xdg-open %s/applets/%s/"'.format(SPICES_DIR, applet))
             });
             this.subMenuCodeApplets.menu.addMenuItem(s)
@@ -256,7 +268,8 @@ class LGS extends Applet.TextIconApplet {
             let s =  new PopupMenu.PopupMenuItem(desklet, {
                 reactive: true
             });
-            s.connect("activate", function() {
+            s.connect("activate", () => {
+                if (this.menu.isOpen) this.menu.close();
                 Util.spawnCommandLineAsync('bash -c "xdg-open %s/desklets/%s/"'.format(SPICES_DIR, desklet))
             });
             this.subMenuCodeDesklets.menu.addMenuItem(s)
@@ -270,7 +283,8 @@ class LGS extends Applet.TextIconApplet {
             let s =  new PopupMenu.PopupMenuItem(extension, {
                 reactive: true
             });
-            s.connect("activate", function() {
+            s.connect("activate", () => {
+                if (this.menu.isOpen) this.menu.close();
                 Util.spawnCommandLineAsync('bash -c "xdg-open %s/extensions/%s/"'.format(SPICES_DIR, extension))
             });
             this.subMenuCodeExtensions.menu.addMenuItem(s)
@@ -283,6 +297,10 @@ class LGS extends Applet.TextIconApplet {
         // inhibit the update timer when applet removed from panel
         this.applet_running = false;
     };
+
+    on_applet_middle_clicked(event) {
+        Util.spawnCommandLineAsync("bash -c '"+WATCHXSE_SCRIPT+"'")
+    }
 } // End of class LGS
 
 function main(metadata, orientation, panelHeight, instance_id) {

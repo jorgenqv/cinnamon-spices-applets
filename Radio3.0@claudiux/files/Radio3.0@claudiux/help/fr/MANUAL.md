@@ -9,7 +9,7 @@
 
 ## Aperçu
 
-Radio3.0 est une applet * Récepteur & Enregisteur de Radios Internet * pour Cinnamon.
+Radio3.0 est une applet **Récepteur & Enregisteur de Radios Internet** pour Cinnamon.
 
 
 Avec Radio3.0 vous pouvez :
@@ -55,6 +55,8 @@ Avec Radio3.0 vous pouvez :
       1. [Linux Mint, Ubuntu, Debian](#DepMint)  
       1. [Arch](#DepArch)  
       1. [Fedora](#DepFedora)  
+
+  1. [Comment installer la dernière version de yt-dlp ?](#InstallYtdlp)
 
   1. [Comment installer l'applet Radio3.0 ?](#InstallApplet)  
 
@@ -105,7 +107,7 @@ Radio3.0 utilise:
 
   * _sox_ (Sound eXchange) pour enregistrer dans un fichier le flux radio, ou plutôt le son sortant de votre carte son.
 
-  * _pacmd_ (PulseAudio Command) qui est un outil pour piloter _pulseaudio_.
+  * _pacmd_ (PulseAudio Command) qui est un outil pour piloter _pulseaudio_, fonctionnant également avec _pipewire_.
 
   * _at_ pour programmer des enregistrements.
 
@@ -133,7 +135,7 @@ Vous pouvez également installer _Pulse Effects_ pour utiliser plusieurs effets 
 
 `sudo apt update`
 
-`sudo apt install mpv libmpv1 libmpv-dev sox libsox-fmt-all pulseaudio pulseaudio-utils at libnotify-bin youtube-dl ffmpeg ffmpegthumbnailer python3-polib python3-brotli`
+`sudo apt install mpv libmpv-dev sox libsox-fmt-all pulseaudio-utils at libnotify-bin youtube-dl ffmpeg ffmpegthumbnailer python3-polib python3-brotli`
 
 Éventuellement:
 
@@ -142,7 +144,7 @@ Vous pouvez également installer _Pulse Effects_ pour utiliser plusieurs effets 
 <a name="DepArch"></a>
 ### Arch
 
-`sudo pacman -Syu mpv sox pulseaudio at libnotify youtube-dl ffmpeg ffmpegthumbnailer python-brotli`
+`sudo pacman -Syu mpv sox at libnotify youtube-dl ffmpeg ffmpegthumbnailer python-brotli`
 
 `yay -S python-polib`
 
@@ -159,12 +161,15 @@ Pour installer Yay sur Arch Linux et d'autres systèmes basés sur Arch, exécut
 <a name="DepFedora"></a>
 ### Fedora
 
-`sudo dnf install mpv sox pulseaudio at libnotify yt-dlp ffmpeg gstreamer1-libav python3-brotli python3-polib`
+`sudo dnf install mpv sox at libnotify yt-dlp ffmpeg gstreamer1-libav python3-brotli python3-polib`
 
 [Retour à la table des matières](#TOC)
 
 ***
+<a name="InstallYtdlp"></a>
 ## Comment installer la dernière version de yt-dlp ?
+Veuillez noter qu'à partir de sa version 1.0.3, Radio3.0 installe et met à jour automatiquement _yr-dlp_ dans votre répertoire `~/bin/`.
+
 _yt-dlp_ est utilisé par **Radio3.0** pour télécharger des vidéos depuis YouTube.
 
 La dernière version de _yt-dlp_ corrige des bugs et tient notamment mieux compte des cookies de votre navigateur pour ne pas vous priver du droit de télécharger des vidéos pour des raisons de limite d'âge.
@@ -205,7 +210,7 @@ Le meilleur endroit est près de l'applet _Son_. Vous pouvez donc facilement con
 
 Cette applet possède un menu (clic gauche) et un menu contextuel (clic droit).
 
-Certaines actions peuvent être effectuées à l'aide d'un clic du milieu ou d'un défilement sur l'icône.
+Certaines actions peuvent être effectuées à l'aide d'un clic du milieu (allumer/arrêter ma radio) ou d'un défilement sur l'icône (changement du volume sonore).
 
 <a name="HowToAdd"></a>
 ### Comment ajouter des radios à ma liste ?
@@ -239,7 +244,7 @@ Lors de l'écoute d'une radio, la couleur de l'icône symbolique change (vert pa
 
 Lorsqu'aucune radio ne joue, cliquez avec le bouton central sur l'icône.
 
-(Autre façon : Cliquez sur la première radio dans la section *Stations récemment écoutées* du menu.)
+Autre façon : Cliquez sur la première radio dans la section *Stations récemment écoutées* du menu.
 
 <a name="ListenAtStartup"></a>
 ### Jouez au démarrage de Cinnamon la dernière radio que vous avez écoutée

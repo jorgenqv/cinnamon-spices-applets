@@ -1,3 +1,57 @@
+### v3.5.2~20240124
+  * Prevents display error.
+
+### v3.5.1~20240120
+  * Improves subprocesses (part2).
+
+### v3.5.0~20240119
+  * Improves subprocesses.
+
+### v3.4.0~20240107
+  * Fixes #5352.
+  * Added an option in the General tab to display a tooltip or not.
+
+### v3.3.0~20240102
+  * Fixes #4986.
+  * From now on, the monospace font style is only used when size must be preserved.
+
+### v3.2.1~20240102
+  * Toggle menu after selecting Suspend option.
+
+### v3.2.0~20240101
+  * Adds the ability to suspend this applet (menu option).
+
+### v3.1.3~20231231
+  * Adds the --icon parameter for zenity v4.
+  * Allows translations for messages in bash scripts.
+
+### v3.1.2~20231230
+  * Removes the --window-icon parameter for zenity v4.
+
+### v3.1.1~20230708
+  * Fixes #4929
+
+### v3.1.0~20230630
+  * Fixes issues for Manjaro and Arch Linux.
+
+### v3.0.3~20230615
+  * Fixes #4846 (/var/log/auth.log flooding by sudo)
+
+### v3.0.2~20230607
+  * Fixes #4886 (double-separator bug)
+
+### v3.0.1~20230429
+  * lib/checkDependencies.js: fixes  #4828
+
+### v3.0.0~20230420
+  * Now users can specify certain limit values and a formula to correct the values returned by a sensor.
+
+### v2.0.3~20230205
+  * Better integration with Fedora - Fixes #4672
+
+### v2.0.2~20230105
+  * Minor bug fix: remove useless trailing separator 
+
 ### v2.0.1~20221228
   * Bugfixes (changing text color)
 

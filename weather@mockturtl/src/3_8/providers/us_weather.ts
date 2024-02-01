@@ -304,7 +304,6 @@ export class USWeather extends BaseProvider {
 				counter = 0;
 
 			if (counter > 1) {
-				global.log("3 elements")
 				return true;
 			}
 		}
@@ -323,7 +322,6 @@ export class USWeather extends BaseProvider {
 			const curDate = DateTime.fromISO(element.startTime).setZone(this.observationStations[0].properties.timeZone);
 			if (!OnSameDay(today, curDate))
 				continue;
-			global.log(index)
 			return index;
 		}
 
@@ -427,14 +425,14 @@ export class USWeather extends BaseProvider {
 					main: _("Few clouds"),
 					description: _("Few clouds"),
 					customIcon: (isNight) ? "night-alt-cloudy-symbolic" : "day-cloudy-symbolic",
-					icons: ["weather-clear-night", "weather-severe-alert"]
+					icons: (isNight) ? ["weather-few-clouds-night"] : ["weather-few-clouds"]
 				}
 			case "sct": // Partly cloudy
 				return {
 					main: _("Partly cloudy"),
 					description: _("Partly cloudy"),
 					customIcon: (isNight) ? "night-alt-cloudy-symbolic" : "day-cloudy-symbolic",
-					icons: ["weather-clear", "weather-severe-alert"]
+					icons: (isNight) ? ["weather-few-clouds-night"] : ["weather-few-clouds"]
 				}
 			case "bkn": // Mostly cloudy
 				return {
@@ -454,28 +452,28 @@ export class USWeather extends BaseProvider {
 				return {
 					main: _("Clear"),
 					description: _("Clear and windy"),
-					customIcon: (IsNight) ? "night-alt-wind-symbolic" : "day-windy-symbolic",
+					customIcon: (isNight) ? "night-alt-wind-symbolic" : "day-windy-symbolic",
 					icons: (isNight) ? ["weather-clear-night"] : ["weather-clear"]
 				}
 			case "wind_few": // A few clouds and windy
 				return {
 					main: _("Few clouds"),
 					description: _("Few clouds and windy"),
-					customIcon: (IsNight) ? "night-alt-cloudy-windy-symbolic" : "day-cloudy-windy-symbolic",
+					customIcon: (isNight) ? "night-alt-cloudy-windy-symbolic" : "day-cloudy-windy-symbolic",
 					icons: (isNight) ? ["weather-few-clouds-night"] : ["weather-few-clouds"]
 				}
 			case "wind_sct": // Partly cloudy and windy
 				return {
 					main: _("Partly cloudy"),
 					description: _("Partly cloudy and windy"),
-					customIcon: (IsNight) ? "night-alt-cloudy-windy-symbolic" : "day-cloudy-windy-symbolic",
+					customIcon: (isNight) ? "night-alt-cloudy-windy-symbolic" : "day-cloudy-windy-symbolic",
 					icons: (isNight) ? ["weather-clouds-night", "weather-few-clouds-night"] : ["weather-clouds", "weather-few-clouds"]
 				}
 			case "wind_bkn": // Mostly cloudy and windy
 				return {
 					main: _("Mostly cloudy"),
 					description: _("Mostly cloudy and windy"),
-					customIcon: (IsNight) ? "night-alt-cloudy-windy-symbolic" : "day-cloudy-windy-symbolic",
+					customIcon: (isNight) ? "night-alt-cloudy-windy-symbolic" : "day-cloudy-windy-symbolic",
 					icons: (isNight) ? ["weather-clouds-night", "weather-few-clouds-night"] : ["weather-clouds", "weather-few-clouds"]
 				}
 			case "wind_ovc":
