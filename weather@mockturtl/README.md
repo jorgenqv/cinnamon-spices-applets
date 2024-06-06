@@ -30,14 +30,14 @@ You can also save locations what you entered manually and switch between them in
 
 | Weather Providers          | Needs API key | Maximum Forecast Days | Maximum Forecast Hours | Immediate Forecast | Alerts  | Other information             |
 | -------------------------- | ------------- | --------------------- | ---------------------- | ------------------ | ------- | ----------------------------- |
-| **OpenWeatherMap**         | No            | 7                     | 0                      | No                 | No      | --                            |
+| **Open-Meteo**             | No            | 16                    | 24                     | No                 | No      | Default provider              |
+| **OpenWeatherMap**         | No            | 7                     | 0                      | No                 | No      | Previous default provider     |
 | **MET Norway**             | No            | 10                    | 48                     | Depends            | Depends | --                            |
 | **DMI Denmark**            | No            | 10                    | 48                     | No                 | No      | --                            |
-| **Deutscher Wetterdienst** | No            | 10                    | 240                    | No                 | Yes     | --                            |
-| **Met Office UK**          | No            | 5                     | 36                     | No                 | No      | --                            |
-| **US National Weather**    | No            | 7                     | 156                    | No                 | Yes     | --                            |
-| **Open-Meteo**             | No            | 16                    | 24                     | No                 | No      | Default provider              |
-| **OpenWeatherMap OneCall** | Yes           | 8                     | 48                     | Yes                | Alerts  | -                             |
+| **Deutscher Wetterdienst** | No            | 10                    | 240                    | No                 | Yes     | Covers only Germany           |
+| **Met Office UK**          | No            | 5                     | 36                     | No                 | No      | Covers only UK                |
+| **US National Weather**    | No            | 7                     | 156                    | No                 | Yes     | Covers only USA               |
+| **OpenWeatherMap OneCall** | Yes           | 8                     | 48                     | Yes                | Alerts  | Limitied free calls           |
 | **WeatherBit**             | Yes           | 16                    | 0**                    | No                 | Yes*    | --                            |
 | **Visual Crossing**        | Yes           | 15                    | 336                    | No                 | Yes     | --                            |
 | **Tomorrow.io**            | Yes           | 15                    | 108                    | No                 | Depends | Previously known as Climacell |
@@ -45,11 +45,15 @@ You can also save locations what you entered manually and switch between them in
 | **Weather Underground**    | Yes           | 5                     | 0                      | No                 | No      | --                            |
 | **Pirate Weather**         | Yes           | 7                     | 168                    | Yes                | Depends | --                            |
 
+### Open-Meteo
+
+[Open-Meteo](https://open-meteo.com/) is an open-source weather API since 2022 that offers free access for non-commercial use. This applets default weather provider from 2024. No API key required. Read more about the service [here](https://open-meteo.com/en/about).
+
 ### OpenWeatherMap
 
 Worldwide Online Weather service by OpenWeather Ltd founded in 2012 with headquarters in London UK. [OpenWeatherMap Website](https://openweathermap.org/). Read more about the service [here](https://en.wikipedia.org/wiki/OpenWeatherMap).
 
-* This is the default provider that works out of the box. Big Thanks to them supporting free open source projects, like this!
+* This used to be the default provider until May 2024. Big Thanks to them supporting free open source projects, like this!
 
 ### MET Norway
 
@@ -92,10 +96,6 @@ The National Weather Service in the USA is a federal government agency formed in
 * Sometimes it takes 10-15 seconds to obtain weather, please be patient when it loads up the first time.
 
 * Observations are quite spotty so it combines multiple observation stations if needed in a 50km area.
-
-### Open-Meteo
-
-[Open-Meteo](https://open-meteo.com/) is an open-source weather API and offers free access for non-commercial use. No API key required.
 
 ### OpenWeatherMap OneCall
 
@@ -214,9 +214,9 @@ by making a PR (pull request) on Github or contact the current maintainer of the
 
 ## Known Issues
 
-* Hourly forecast toggle button is not centered to the middle of the popup menu
+* Hourly forecast toggle button is not centered to the middle of the popup menu.
 
-* Sunset/Sunrise is not displayed correctly if there is a mismatch between the Location Timezone and System Timezone when using Manual Location with some of the weather providers
+* Sunset/Sunrise is not displayed correctly if there is a mismatch between the Location Timezone and System Timezone when using Manual Location with some of the weather providers.
 
 * On subsequent refreshes/relogins the popup menu's element's may lose all padding.
 
