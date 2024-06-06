@@ -1,3 +1,19 @@
+### v3.7.0~20240425
+  * Added option to record values exceeding limits.
+  * Fixes  #5606.
+
+### v3.6.2~20240402
+  * Displays the tooltip regardless of the refresh interval.
+
+### v3.6.1~20240331
+  * More refresh intervals.
+
+### v3.6.0~20240215
+  * Adds ability to choose the color of the text in panel.
+
+### v3.5.3~20240213
+  * Minor change in settings: A sensor's name can now be displayed in full.
+
 ### v3.5.2~20240124
   * Prevents display error.
 

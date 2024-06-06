@@ -11,41 +11,48 @@
       "type": "page",
       "title": "Behavior",
       "sections": [
-        "section1",
-        "section2",
-        "section3"
+        "sectionBehavior1",
+        "sectionBehavior2",
+        "sectionBehavior3"
       ]
     },
     "page_icon": {
       "type": "page",
       "title": "Icon",
       "sections": [
-        "section4"
+        "sectionIcon1"
       ]
     },
     "page_sound": {
       "type": "page",
       "title": "Sound",
       "sections": [
-        "section5"
+        "sectionSound1",
+        "sectionSound2",
+        "sectionSound3",
+        "sectionSound4"
       ]
     },
     "page_shortcuts": {
       "type": "page",
       "title": "Shortcuts",
       "sections": [
-        "section6"
+        "sectionShortcuts1"
       ]
     },
-    "section1": {
+    "sectionBehavior1": {
       "type": "section",
       "title": "Menu",
       "keys": [
         "playerControl",
-        "extendedPlayerControl"
+        "extendedPlayerControl",
+        "keepPlayerListOpen",
+        "keepChoosePlayerOpen",
+        "avoidTwice",
+        "seekerTooltipDelay"
       ]
     },
-    "section2": {
+    "sectionBehavior2": {
       "type": "section",
       "title": "Panel",
       "keys": [
@@ -59,7 +66,7 @@
         "hideSystray"
       ]
     },
-    "section3": {
+    "sectionBehavior3": {
       "type": "section",
       "title": "Tooltip",
       "keys": [
@@ -68,38 +75,72 @@
         "tooltipShowArtistTitle"
       ]
     },
-    "section4": {
+    "sectionIcon1": {
       "type": "section",
       "title": "Icon",
       "keys": [
+        "showalbum",
+        "keepAlbumAspectRatio",
         "showVolumeLevelNearIcon",
+        "showMicMutedOnIcon",
+        "showMicUnmutedOnIcon",
         "adaptColor",
         "color101_115",
         "color116_130",
         "color131_150",
-        "resetColorsButton",
-        "showalbum",
-        "keepAlbumAspectRatio"
+        "resetColorsButton"
       ]
     },
-    "section5": {
+    "sectionSound1": {
       "type": "section",
       "title": "Sound Settings",
       "keys": [
         "setAmplification",
         "stepVolume",
         "magneticOn",
+        "magnetic25On",
         "alwaysCanChangeMic"
       ]
     },
-    "section6": {
+    "sectionSound2": {
+      "type": "section",
+      "title": "OSD",
+      "keys": [
+        "showMediaKeysOSD",
+        "showOSDonStartup"
+      ]
+    },
+    "sectionSound3": {
+      "type": "section",
+      "title": "Sounds",
+      "keys": [
+        "volumeSoundFile",
+        "volumeSoundEnabled"
+      ]
+    },
+    "sectionSound4": {
+      "type": "section",
+      "dependency": "soundATcinnamonDOTorg_is_loaded",
+      "title": "Remove incompatible applets",
+      "keys": [
+        "remove_soundATcinnamonDOTorg"
+      ]
+    },
+    "sectionShortcuts1": {
       "type": "section",
       "title": "Shortcuts",
       "keys": [
         "keyOpen",
+        "keySwitchPlayer",
+        "redefine-volume-keybindings",
+        "button-set-to-default-keybindings",
+        "audio-stop",
+        "pause-on-off",
         "volume-mute",
         "volume-up",
-        "volume-down"
+        "volume-down",
+        "audio-next",
+        "audio-prev"
       ]
     }
   },
@@ -114,11 +155,42 @@
     "description": "Show Loop and Shuffle controls",
     "dependency": "playerControl"
   },
+  "keepPlayerListOpen": {
+    "type": "switch",
+    "dependency": "playerControl",
+    "default": false,
+    "description": "Keep the player list open"
+  },
+  "keepChoosePlayerOpen": {
+    "type": "switch",
+    "default": false,
+    "description": "Keep the player controller selector open"
+  },
+  "avoidTwice": {
+    "type": "switch",
+    "default": false,
+    "description": "Avoid displaying controllers twice"
+  },
+  "seekerTooltipDelay": {
+    "type": "spinbutton",
+    "default": 400,
+    "units": "ms",
+    "min": 50,
+    "max": 1500,
+    "step": 50,
+    "description": "Seeker tooltip: time to disappear"
+  },
   "keyOpen": {
     "type": "keybinding",
     "description": "Show menu",
     "default": "<Shift><Super>s",
     "tooltip": "Set keybinding(s) to show the sound applet menu."
+  },
+  "keySwitchPlayer": {
+    "type": "keybinding",
+    "description": "Switch to next player",
+    "default": "::",
+    "tooltip": "Set keybinding(s) to switch to the next player if it exists."
   },
   "_knownPlayers": {
     "type": "generic",
@@ -209,6 +281,16 @@
     "default": false,
     "description": "Display volume level near icon"
   },
+  "showMicMutedOnIcon": {
+    "type": "switch",
+    "default": true,
+    "description": "Display icon indicating that the microphone is muted, if applicable"
+  },
+  "showMicUnmutedOnIcon": {
+    "type": "switch",
+    "default": false,
+    "description": "Display icon indicating that the microphone is activated, if applicable"
+  },
   "setAmplification": {
     "type": "button",
     "description": "Maximum volume control",
@@ -237,6 +319,12 @@
     "description": "Magnetize the 'Volume 100%' mark",
     "tooltip": "When checked, the 'Volume 100%' mark becomes magnetic: the volume is automatically set to 100% when the distance between the volume value and 100% is lesser than a half-step.",
     "default": true
+  },
+  "magnetic25On": {
+    "type": "switch",
+    "description": "Magnetize all multiples of 25%",
+    "dependency": "magneticOn",
+    "default": false
   },
   "adaptColor": {
     "type": "switch",
@@ -273,23 +361,100 @@
     "tooltip": "Always show the 'Mute input' switch in the context menu.",
     "default": true
   },
+  "showMediaKeysOSD": {
+    "type": "combobox",
+    "default": "medium",
+    "options": {
+      "disabled": "disabled",
+      "small": "small",
+      "medium": "medium",
+      "large": "large"
+    },
+    "description": "Whether the media keys osd is disabled or its relative display size"
+  },
+  "showOSDonStartup": {
+    "type": "switch",
+    "description": "Show volume level in OSD on startup",
+    "default": false
+  },
+  "volumeSoundFile": {
+    "type": "soundfilechooser",
+    "description": "Which sound to play when the volume is changed",
+    "default": "/usr/share/mint-artwork/sounds/volume.oga"
+  },
+  "volumeSoundEnabled": {
+    "type": "switch",
+    "description": "Whether to play a sound when the volume is changed",
+    "default": false
+  },
+  "redefine-volume-keybindings": {
+    "type": "switch",
+    "description": "Redefine Multimedia Keyboard Shortcuts",
+    "default": false
+  },
+  "button-set-to-default-keybindings": {
+    "type": "button",
+    "dependency": "redefine-volume-keybindings",
+    "description": "Use the same shortcuts as those defined by Cinnamon",
+    "callback": "_set_shortcuts_as_default"
+  },
+  "pause-on-off": {
+    "type": "keybinding",
+    "dependency": "redefine-volume-keybindings",
+    "default": "::",
+    "description": "Pause/Play toggle"
+  },
+  "audio-stop": {
+    "type": "keybinding",
+    "dependency": "redefine-volume-keybindings",
+    "default": "::",
+    "description": "Stop"
+  },
   "volume-mute": {
     "type": "keybinding",
-    "default": "XF86AudioMute",
+    "dependency": "redefine-volume-keybindings",
+    "default": "::",
     "description": "Volume Mute"
   },
   "volume-up": {
     "type": "keybinding",
-    "default": "XF86AudioRaiseVolume",
+    "dependency": "redefine-volume-keybindings",
+    "default": "::",
     "description": "Volume Up"
   },
   "volume-down": {
     "type": "keybinding",
-    "default": "XF86AudioLowerVolume",
+    "dependency": "redefine-volume-keybindings",
+    "default": "::",
     "description": "Volume Down"
+  },
+  "audio-next": {
+    "type": "keybinding",
+    "dependency": "redefine-volume-keybindings",
+    "default": "::",
+    "description": "Next Track"
+  },
+  "audio-prev": {
+    "type": "keybinding",
+    "dependency": "redefine-volume-keybindings",
+    "default": "::",
+    "description": "Previous Track"
   },
   "volume": {
     "type": "generic",
     "default": "50%"
+  },
+  "mic-level": {
+    "type": "generic",
+    "default": "50%"
+  },
+  "soundATcinnamonDOTorg_is_loaded": {
+    "type": "generic",
+    "default": false
+  },
+  "remove_soundATcinnamonDOTorg": {
+    "type": "button",
+    "description": "Remove from panel the sound@cinnamon.org applet",
+    "callback": "_on_remove_soundATcinnamonDOTorg_from_panels"
   }
 }

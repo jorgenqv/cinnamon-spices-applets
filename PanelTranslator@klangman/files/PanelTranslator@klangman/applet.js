@@ -27,9 +27,18 @@ const Util = imports.misc.util;
 const Lang = imports.lang;
 const Tooltips = imports.ui.tooltips;
 const Clutter = imports.gi.Clutter;
+const Config = imports.misc.config;
+const Gtk = imports.gi.Gtk;
+const GdkPixbuf = imports.gi.GdkPixbuf;
+const Cogl = imports.gi.Cogl;
+const Main = imports.ui.main;
+
+const ICONTHEME = Gtk.IconTheme.get_default();
 
 const UUID = "PanelTranslator@klangman";
 const ICON_SIZE = 16;
+
+const majorVersion = parseInt(Config.PACKAGE_VERSION.substring(0,1));
 
 const { hardcodedLanguages } = require('./languages_0_9_6_12.js');
 
@@ -39,7 +48,7 @@ const AutoPasteType = {
    Clipboard: 2
 }
 
-const MiddleBtnAction = {
+const TranslateAction = {
    DoNothing: 0,
    PopupSelection: 1,
    PopupClipboard: 2,
@@ -72,6 +81,11 @@ function _(text) {
   return locText;
 }
 
+function escapeQuotes(txt) {
+   txt = txt.replace(/\"/g, "\\\"");
+   return txt;
+}
+
 class PanelTranslatorApp extends Applet.IconApplet {
 
    constructor(orientation, panelHeight, instanceId) {
@@ -94,9 +108,81 @@ class PanelTranslatorApp extends Applet.IconApplet {
       this.getEngine();
       this.languages = [];
       this.getLanguages();
+      this.hotkey1Combo = null;
+      this.hotkey2Combo = null;
    }
 
    on_applet_added_to_panel() {
+      this._signalManager.connect(this.settings, "changed::hotkey-1", this._updateHotkeys, this);
+      this._signalManager.connect(this.settings, "changed::hotkey-2", this._updateHotkeys, this);
+      this._updateHotkeys()
+   }
+
+   on_applet_removed_from_panel() {
+      this._updateHotkeys(false);
+   }
+
+   _updateHotkeys(register=true) {
+      if (this.hotkey1Combo) {
+         Main.keybindingManager.removeHotKey("panelTranslator-hotkey1");
+         this.hotkey1Combo = null;
+      }
+      if (this.hotkey2Combo) {
+         Main.keybindingManager.removeHotKey("panelTranslator-hotkey2");
+         this.hotkey2Combo = null;
+      }
+      if (register) {
+         this.hotkey1Combo = this.getHotkeySequence("hotkey-1");
+         if (this.hotkey1Combo) {
+            Main.keybindingManager.addHotKey("panelTranslator-hotkey1", this.hotkey1Combo, () => this.performHotkey("hotkey1-action") );
+         }
+         this.hotkey2Combo = this.getHotkeySequence("hotkey-2");
+         if (this.hotkey2Combo) {
+            Main.keybindingManager.addHotKey("panelTranslator-hotkey2", this.hotkey2Combo, () => this.performHotkey("hotkey2-action") );
+         }
+      }
+   }
+
+   getHotkeySequence(name) {
+      let str = this.settings.getValue(name);
+      if (str && str.length>0 && str != "::") {
+         return str;
+      }
+      return null;
+   }
+
+   performHotkey(name) {
+      let action = this.settings.getValue(name);
+      this._performTranslateAction(action);
+   }
+
+   _performTranslateAction(action) {
+      switch(action) {
+         case TranslateAction.PopupSelection:
+            this.openPopupMenu(AutoPasteType.Selection, false);
+            break;
+         case TranslateAction.PopupClipboard:
+            this.openPopupMenu(AutoPasteType.Clipboard, false);
+            break;
+         case TranslateAction.PopupSelectionPlay:
+            this.openPopupMenu(AutoPasteType.Selection, true);
+            break;
+         case TranslateAction.PopupClipboardPlay:
+            this.openPopupMenu(AutoPasteType.Clipboard, true);
+            break;
+         case TranslateAction.PlaySelection:
+            this.translatorPopup.translateClipboard(AutoPasteType.Selection, true);
+            break;
+         case TranslateAction.PlayClipboard:
+            this.translatorPopup.translateClipboard(AutoPasteType.Clipboard, true);
+            break;
+         case TranslateAction.TransSelectionCopy:
+            this.translatorPopup.translateClipboard(AutoPasteType.Selection, false, true);
+            break;
+         case TranslateAction.TransClipboardCopy:
+            this.translatorPopup.translateClipboard(AutoPasteType.Clipboard, false, true);
+            break;
+      }
    }
 
    _onButtonPressEvent(actor, event) {
@@ -108,32 +194,7 @@ class PanelTranslatorApp extends Applet.IconApplet {
          } else {
             action = this.settings.getValue("middle-button-action");
          }
-         switch(action) {
-            case MiddleBtnAction.PopupSelection:
-               this.openPopupMenu(AutoPasteType.Selection, false);
-               break;
-            case MiddleBtnAction.PopupClipboard:
-               this.openPopupMenu(AutoPasteType.Clipboard, false);
-               break;
-            case MiddleBtnAction.PopupSelectionPlay:
-               this.openPopupMenu(AutoPasteType.Selection, true);
-               break;
-            case MiddleBtnAction.PopupClipboardPlay:
-               this.openPopupMenu(AutoPasteType.Clipboard, true);
-               break;
-            case MiddleBtnAction.PlaySelection:
-               this.translatorPopup.translateClipboard(AutoPasteType.Selection, true);
-               break;
-            case MiddleBtnAction.PlayClipboard:
-               this.translatorPopup.translateClipboard(AutoPasteType.Clipboard, true);
-               break;
-            case MiddleBtnAction.TransSelectionCopy:
-               this.translatorPopup.translateClipboard(AutoPasteType.Selection, false, true);
-               break;
-            case MiddleBtnAction.TransClipboardCopy:
-               this.translatorPopup.translateClipboard(AutoPasteType.Clipboard, false, true);
-               break;
-         }
+         this._performTranslateAction(action);
          return;
       }
       super._onButtonPressEvent(actor, event);
@@ -152,6 +213,16 @@ class PanelTranslatorApp extends Applet.IconApplet {
          this.translatorPopup.translateClipboard(autoPaste, play);
       }
       this.menu.toggle();
+   }
+
+   setInfoMessage(message) {
+      if (message) {
+         this.infomenuitem.setIconSymbolicName("emblem-important");
+         this.infomenuitem.label.set_text(message);
+         this.infomenuitem.actor.show();
+      } else {
+         this.infomenuitem.actor.hide();
+      }
    }
 
    getLanguages() {
@@ -194,6 +265,7 @@ class PanelTranslatorApp extends Applet.IconApplet {
             let toDefName = this.settings.getValue("default-to-language");
             this.translatorPopup.setFromLanguage( this.getLanguage( fromDefName ), fromDefName );
             this.translatorPopup.setToLanguage(   this.getLanguage( toDefName ), toDefName );
+            this.updateTooltip( fromDefName, toDefName );
          }
       } else if (exitCode===127){
          this.infomenuitem.label.set_text(_("Required \"trans\" command not found, please install translate-shell"));
@@ -255,6 +327,13 @@ class PanelTranslatorApp extends Applet.IconApplet {
       this.engine = ret;
    }
 
+   updateTooltip(fromLanguageTxt, toLanguageTxt) {
+      if(majorVersion > 4 && fromLanguageTxt.length > 0 && toLanguageTxt.length > 0){
+         this.set_applet_tooltip("<b>" + _("Translator") + "</b>" + "\n" + fromLanguageTxt + " \u{2B95} " + toLanguageTxt, true);
+      } else {
+         this.set_applet_tooltip(_("Translator"));
+      }
+   }
 }
 
 class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
@@ -281,10 +360,12 @@ class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
          if (this.fromLanguage) {
             this.toLanguage = from;
             this.toSearchEntry.set_text(fromTxt);
+            this._applet.settings.setValue("default-to-language", fromTxt);
          }
          if (this.toLanguage) {
             this.fromLanguage = to;
             this.fromSearchEntry.set_text(toTxt);
+            this._applet.settings.setValue("default-from-language", toTxt);
          }
          let fromText = this.fromTextBox.get_text();
          let toText = this.toTextBox.get_text();
@@ -309,7 +390,6 @@ class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
       this.languageBox.add_child(this.toSearchEntry);
 
       // Setup the from/to text boxes
-      //let fromScrollView = new St.ScrollView()     // TODO... Get this working!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       this.fromTextBox = new St.Entry({name: 'menu-search-entry', hint_text: _("{Text to translate}"), width: 250, height: 180, style: 'margin-right:2px;'});
       let text = this.fromTextBox.get_clutter_text();
       text.set_line_wrap(true);
@@ -317,11 +397,9 @@ class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
       text.set_max_length(200);
       text.connect('text-changed', () => {this.enableTranslateIfPossible();});
       text.connect('activate', (actor, event) => {
-         Util.spawnCommandLineAsyncIO( "trans -b -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.toLanguage.code + " \"" + this.fromTextBox.get_text() + "\"", Lang.bind(this, this.readTranslation) );
+         Util.spawnCommandLineAsyncIO( "trans -b -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.toLanguage.code + " \"" + escapeQuotes(this.fromTextBox.get_text()) + "\"", Lang.bind(this, this.readTranslation) );
          });
-      //fromScrollView.set_child(this.fromTextBox);
       this.textBox.add_child(this.fromTextBox);
-      //this.textBox.add_child(fromScrollView);
 
       this.toTextBox = new St.Entry({name: 'menu-search-entry', hint_text: _("{Translated text}"), width: 250, height: 180, style: 'margin-left:2px;'});
       text = this.toTextBox.get_clutter_text();
@@ -343,7 +421,7 @@ class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
          Util.spawnCommandLineAsync("/usr/bin/xdg-open https://cinnamon-spices.linuxmint.com/applets/view/385");
          });
       this.playFrom = new ControlButton("audio-speakers-symbolic", _("Play"), () => {
-         Util.spawnCommandLineAsync("trans -b -p -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.fromLanguage.code + " \"" + this.fromTextBox.get_text() + "\"");
+         Util.spawnCommandLineAsyncIO("trans -no-translate -speak -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.fromLanguage.code + " \"" + escapeQuotes(this.fromTextBox.get_text()) + "\"", Lang.bind(this, this.readSpeak));
          });
       this.playFrom.setEnabled(false);
       this.paste = new ControlButton("edit-paste-symbolic", _("Paste"), () => {
@@ -355,7 +433,7 @@ class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
          this.toTextBox.set_text("");
          });
       this.translate = new ControlButton("media-playback-start-symbolic", _("Translate"), () => {
-         Util.spawnCommandLineAsyncIO( "trans -b -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.toLanguage.code + " \"" + this.fromTextBox.get_text() + "\"", Lang.bind(this, this.readTranslation) );
+         Util.spawnCommandLineAsyncIO( "trans -b -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.toLanguage.code + " \"" + escapeQuotes(this.fromTextBox.get_text()) + "\"", Lang.bind(this, this.readTranslation) );
          });
       this.translate.setEnabled(false);
       let toBtnBox = new St.BoxLayout({x_align: Clutter.ActorAlign.END, x_expand: true});
@@ -366,7 +444,7 @@ class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
       this.copy.setEnabled(false);
       this.copy.getActor().set_x_align(Clutter.ActorAlign.END);
       this.playTo = new ControlButton("audio-speakers-symbolic", _("Play Translation"), () => {
-         Util.spawnCommandLineAsync("trans -b -p -e " + this._applet.engine + " " + this.toLanguage.code + ":" + this.toLanguage.code + " \"" + this.toTextBox.get_text() + "\"");
+         Util.spawnCommandLineAsyncIO("trans -no-translate -speak -e " + this._applet.engine + " " + this.toLanguage.code + ":" + this.toLanguage.code + " \"" + escapeQuotes(this.toTextBox.get_text()) + "\"", Lang.bind(this, this.readSpeak));
          });
       this.playTo.setEnabled(false);
 
@@ -441,13 +519,13 @@ class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
          // Set the text box to "" since the associated language has been changed.
          if (actor == this.fromSearchEntry.get_clutter_text()) {
             this.fromLanguage = language;
-            this.fromTextBox.set_text("");
+            this.fromTextBox.set_text(""); // Clear the text box since the language has changed!
             if (language) {
                this._applet.settings.setValue("default-from-language", useEnglish ? language.englishName : language.name);
             }
          } else {
             this.toLanguage = language;
-            this.toTextBox.set_text("");
+            this.toTextBox.set_text(""); // Clear the text box since the language has changed!
             if (language) {
                this._applet.settings.setValue("default-to-language", useEnglish ? language.englishName : language.name);
             }
@@ -462,6 +540,7 @@ class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
          }
          actor.set_cursor_position(cursorPos);
       }
+      this._applet.updateTooltip(this.fromSearchEntry.get_text(), this.toSearchEntry.get_text());
    }
 
    readTranslation(stdout, stderr, exitCode) {
@@ -471,9 +550,16 @@ class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
       return exitCode;
    }
 
+   readSpeak(stdout, stderr, exitCode) {
+      if (exitCode===0 && stderr.length > 0) {
+         this._applet.setInfoMessage(stderr.trim());
+      }
+      return exitCode;
+   }
+
    playTranslation(stdout, stderr, exitCode) {
       if (this.readTranslation(stdout, stderr, exitCode)==0) {
-         Util.spawnCommandLineAsync("trans -b -p -e " + this._applet.engine + " " + this.toLanguage.code + ":" + this.toLanguage.code + " \"" + this.toTextBox.get_text() + "\"");
+         Util.spawnCommandLineAsync("trans -b -p -e " + this._applet.engine + " " + this.toLanguage.code + ":" + this.toLanguage.code + " \"" + escapeQuotes(this.toTextBox.get_text()) + "\"");
       }
    }
 
@@ -494,14 +580,14 @@ class TranslatorPopupItem extends PopupMenu.PopupMenuSection {
 
    // Callback that gets the clipboard text then performs some action with that text.
    clipboardText(cb, text, translate, play=false, copy=false) {
-      this.fromTextBox.set_text(text);
+      this.fromTextBox.set_text(text.trim());
       if (translate) {
          if (play) {
-            Util.spawnCommandLineAsyncIO( "trans -b -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.toLanguage.code + " \"" + this.fromTextBox.get_text() + "\"", Lang.bind(this, this.playTranslation) );
+            Util.spawnCommandLineAsyncIO( "trans -b -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.toLanguage.code + " \"" + escapeQuotes(this.fromTextBox.get_text()) + "\"", Lang.bind(this, this.playTranslation) );
          } else if (copy) {
-            Util.spawnCommandLineAsyncIO( "trans -b -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.toLanguage.code + " \"" + this.fromTextBox.get_text() + "\"", Lang.bind(this, this.copyTranslation) );
+            Util.spawnCommandLineAsyncIO( "trans -b -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.toLanguage.code + " \"" + escapeQuotes(this.fromTextBox.get_text()) + "\"", Lang.bind(this, this.copyTranslation) );
          } else {
-            Util.spawnCommandLineAsyncIO( "trans -b -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.toLanguage.code + " \"" + this.fromTextBox.get_text() + "\"", Lang.bind(this, this.readTranslation) );
+            Util.spawnCommandLineAsyncIO( "trans -b -e " + this._applet.engine + " " + this.fromLanguage.code + ":" + this.toLanguage.code + " \"" + escapeQuotes(this.fromTextBox.get_text()) + "\"", Lang.bind(this, this.readTranslation) );
          }
       } else {
          this.toTextBox.set_text("");
@@ -534,6 +620,22 @@ class ControlButton {
         this.button.connect('clicked', callback);
 
         this.icon = new St.Icon({ icon_type: St.IconType.SYMBOLIC, icon_name: icon, icon_size: ICON_SIZE });
+
+        let themeIcon = ICONTHEME.lookup_icon(icon, ICON_SIZE, 0);
+        if (themeIcon) {
+           let pixBuf = GdkPixbuf.Pixbuf.new_from_file_at_size(themeIcon.get_filename(), ICON_SIZE, ICON_SIZE);
+           if (pixBuf) {
+              let image = new Clutter.Image();
+              pixBuf.saturate_and_pixelate(pixBuf, 1, true);
+              try {
+                 image.set_data(pixBuf.get_pixels(), pixBuf.get_has_alpha() ? Cogl.PixelFormat.RGBA_8888 : Cogl.PixelFormat.RGBA_888,
+                    ICON_SIZE, ICON_SIZE, pixBuf.get_rowstride() );
+                 this.disabledIcon = new Clutter.Actor({width: ICON_SIZE, height: ICON_SIZE, content: image});
+              } catch(e) {
+                 // Can't set the image data, so just use the default!
+              }
+           }
+        }
         this.button.set_child(this.icon);
         this.actor.add_actor(this.button);
 
@@ -557,6 +659,11 @@ class ControlButton {
         this.button.change_style_pseudo_class("insensitive", !status);
         this.button.can_focus = status;
         this.button.reactive = status;
+        if (status || this.disabledIcon==undefined) {
+           this.button.set_child(this.icon);
+        } else {
+           this.button.set_child(this.disabledIcon);
+        }
     }
 }
 
