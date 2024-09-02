@@ -23,6 +23,7 @@ const Applet = imports.ui.applet;
 const Main = imports.ui.main;
 const Gettext = imports.gettext;
 const SignalManager = imports.misc.signalManager;
+const Util = imports.misc.util;
 const { GLib, St, Clutter } = imports.gi;
 
 const { EyeModeFactory } = require("./eyeModes.js");
@@ -41,6 +42,11 @@ function _(text) {
 }
 
 
+// Mark this for translation since it won't be
+// marked by the translation tool
+const _DEFAULT_TOOLTIP = _("Hey, I saw that!");
+
+
 class Eye extends Applet.Applet {
 	constructor(metadata, orientation, panelHeight, instanceId, areaWidth) {
 		super(orientation, panelHeight, instanceId);
@@ -48,6 +54,7 @@ class Eye extends Applet.Applet {
 		this.orientation  = orientation;
 		this.metadata = metadata;
 		this.area_width = areaWidth;
+		this.instance_id = instanceId;
 
 		this.setAllowedLayout(Applet.AllowedLayout.BOTH);
 
@@ -58,10 +65,21 @@ class Eye extends Applet.Applet {
 
 		this.signals = new SignalManager.SignalManager(null);
 		this.signals.connect(global.screen, 'in-fullscreen-changed', this.on_fullscreen_changed, this);
-        this.signals.connect(Main.layoutManager, 'monitors-changed', this.on_property_updated, this);
+		this.signals.connect(global.screen, 'workspace-switched', () => {
+			// If the eye is refreshed exactly during the workspace switch process it's possible that the position
+			// of the panel is not correctly accessed, so the position of the eye cannot be estimated correctly,
+			// resulting in the eye looking at the wrong direction, to avoid that we will give it some timeout and
+			// wait first for the switch process to complete.
+			Util.setTimeout(() => this.on_property_updated(), 400);
+		}, this);
+        this.signals.connect(Main.layoutManager, 'monitors-changed', () => {
+			Util.setTimeout(() => this.on_property_updated(), 100);
+		}, this);
 
 		this._last_mouse_x = undefined;
 		this._last_mouse_y = undefined;
+		this._last_eye_x = undefined;
+		this._last_eye_y = undefined;
 
 		this.set_active(true);
 		this.update_tooltip();
@@ -130,7 +148,7 @@ class Eye extends Applet.Applet {
 			{
 				key: "deactivate-on-fullscreen",
 				value: "deactivate_on_fullscreen",
-				cb: null,
+				cb: this.on_fullscreen_changed,
 			},
 			{
 				key: "use-alternative-colors",
@@ -193,8 +211,10 @@ class Eye extends Applet.Applet {
 			panelIsInCurrentMonitor = panelsInMonitor.includes(this.panel);
 		}
 
-		if (this.deactivate_on_fullscreen) {
-			this.set_active(!monitorIsInFullscreen && panelIsInCurrentMonitor);
+		if (this.deactivate_on_fullscreen && panelIsInCurrentMonitor) {
+			this.set_active(!monitorIsInFullscreen);
+		} else {
+			this.set_active(true);
 		}
 	}
 
@@ -205,7 +225,7 @@ class Eye extends Applet.Applet {
 	}
 
 	on_eye_mode_update() {
-		if (this.eye_painter && this.eye_painter.mode != this.mode) {
+		if (!this.eye_painter || this.eye_painter.mode != this.mode) {
 			this.eye_painter = EyeModeFactory.createEyeMode(this.mode);
 		}
 	}
@@ -253,6 +273,9 @@ class Eye extends Applet.Applet {
 
 			this.area.queue_repaint();
 		}
+
+		let status = enabled ? "enabled" : "disabled";
+		global.log(UUID, `Eye/${this.instance_id} was ${status}!`);
 	}
 
 	update_tooltip() {
@@ -270,7 +293,6 @@ class Eye extends Applet.Applet {
 
 			if (pos) {
 				let [tx, ty] = pos;
-
 				area_x += tx;
 				area_y += ty;
 			}
@@ -323,15 +345,23 @@ class Eye extends Applet.Applet {
 
 	should_redraw() {
 		const [mouse_x, mouse_y, _] = global.get_pointer();
+		const [ox, oy] = this.get_area_position();
 
 		let should_redraw = true;
-		if (this._last_mouse_x == mouse_x && this._last_mouse_y == mouse_y) {
+		if (this._last_mouse_x == mouse_x &&
+			this._last_mouse_y == mouse_y &&
+			this._last_eye_x == ox &&
+			this._last_eye_y == oy
+		) {
 			should_redraw = false;
-		} else if (this._last_mouse_x == undefined || this._last_mouse_y == undefined) {
+		} else if (this._last_mouse_x == undefined ||
+			       this._last_mouse_y == undefined ||
+				   this._last_eye_x != ox ||
+				   this._last_eye_y != oy
+		) {
 			should_redraw = true;
 		} else {
 			const dist = (x, y) => Math.sqrt(x * x + y * y);
-			const [ox, oy] = this.get_area_position();
 			const [last_x, last_y] = [this._last_mouse_x - ox, this._last_mouse_y - oy];
 			const [current_x, current_y] = [mouse_x - ox, mouse_y - oy];
 			const dist_prod = dist(last_x, last_y) * dist(current_x, current_y);
@@ -348,6 +378,8 @@ class Eye extends Applet.Applet {
 		if (should_redraw) {
 			this._last_mouse_x = mouse_x;
 			this._last_mouse_y = mouse_y;
+			this._last_eye_x = ox;
+			this._last_eye_y = oy;
 		}
 
 		return should_redraw;

@@ -42,9 +42,11 @@ body:
     default: 0
     label: Applet name and maintainer
     options:
+    - ''
     - anime-wallpaper@flyflyan @fly206
     - app-launcher@mchilli @mchilli
     - asl@santiago @SamBurgos
+    - auto-dark-light@gihaume @guillaume-mueller
     - AutostartPrograms@spacy01 @spacy01
     - azan@fahri.nurul.id
     - backgroundroll@Sokawaii25 @Sokawaii25
@@ -71,6 +73,7 @@ body:
     - Cinnamenu@json @fredcw
     - cinnamon-multi-line-taskbar-applet
     - cinnamon-timer@jake1164 @jake1164
+    - cinnamonvantage@garlayntoji @Garlayntoji
     - CinnVIIStarkMenu@NikoKrause @fredcw
     - clean-show-desktop@filipetorresbr @FilipeTorresBR
     - clipboard-eraser@Techcrafter @Techcrafter
@@ -82,14 +85,14 @@ body:
     - CommandRunner@appdevsw
     - computer@brownsr @brownsr
     - cpu-monitor-text@gnemonix @gnemonix
-    - cpufreq@mtwebster
+    - cpufreq@mtwebster @yrtimiD
     - cryptocoin@guantanamoe @imDeprecated
     - ctrl4docker@hoffis-eck.de
     - CustomApplicationsMenu@LLOBERA @Nicolas01
     - CustomPlaces@Nicolas01 @Nicolas01
     - darkMode@linuxedo.com @slgobinath
     - ddcci-monitor-control@andr35 @andr35
-    - ddcci-multi-monitor@tim-we @tim-we
+    - ddcci-multi-monitor@tim-we @GingerGigiCat
     - desaturate-all@hkoosha @hkoosha
     - devbar@ludvigbostrom @ludvigbostrom
     - devutils@fogl
@@ -135,6 +138,7 @@ body:
     - mem-monitor-text@datanom.net @icarter09
     - menu@csknet.org
     - MessagingMenuV3@blub
+    - mic-level@zamszowy @zamszowy
     - Mint-Unsplash-Background@omidmaldar @omidmaldar
     - MonitorInputSource@klangman @klangman
     - moonphase@techi-freki @Techi-Freki
@@ -150,6 +154,7 @@ body:
     - nightscout@ranneft @ImmRanneft
     - nordvpn-indicator@nickdurante @nickdurante
     - notification-mute@jgillula @jgillula
+    - notifications-enhanced@hilyxx @hilyxx
     - nvidiaprime@pdcurtis @pdcurtis
     - octopussy@centurix @centurix
     - officeCenter@scollins @collinss
@@ -158,6 +163,7 @@ body:
     - PanelTranslator@klangman @klangman
     - password-generator@spencerlommel.com @SpencerLommel
     - PDFManager@cinnamon.org
+    - pin-unpin-panel@anaximeno @anaximeno
     - places-bookmarks@dmo60.de
     - places-with-terminal@mtwebster
     - placesCenter@scollins @collinss
@@ -182,7 +188,7 @@ body:
     - ScreenShot@tech71
     - scripts@paucapo.com
     - sct@skulptist.de @Matthias-Hermsdorf
-    - search-box@mtwebster
+    - search-box@mtwebster @claudiux
     - Sensors@claudiux @claudiux
     - separator2@zyzz
     - serviceLauncher@hulygun @hulygun
@@ -200,6 +206,7 @@ body:
     - softyubikey@yubiserver.include.gr
     - sound150@claudiux @claudiux
     - spices-notifier@germanfr @germanfr
+    - SpiceSpy@claudiux @claudiux
     - SpicesUpdate@claudiux @claudiux
     - sshconnect@foobar-beer @foobar-beer
     - sshlauncher@sumo @sumo

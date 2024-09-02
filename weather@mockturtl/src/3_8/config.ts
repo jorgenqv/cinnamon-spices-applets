@@ -1,5 +1,5 @@
 import type { WeatherApplet } from "./main";
-import type { LocationData} from "./types";
+import type { LocationData, LocationServiceResult, WeatherProvider} from "./types";
 import { clearTimeout, setTimeout, _, IsCoordinate, ConstructJsLocale } from "./utils";
 import { Logger } from "./lib/services/logger";
 import type { LogLevel} from "./consts";
@@ -29,6 +29,8 @@ import { OpenMeteo } from "./providers/open-meteo/provider";
 import { OpenWeatherMapOpen } from "./providers/openweathermap/provider-open";
 import type settingsSchema from "../../files/weather@mockturtl/3.8/settings-schema.json";
 import { soupLib } from "./lib/soupLib";
+import { GeoTimezone } from "./location_services/tz_lookup";
+import { SwissMeteo } from "./providers/swiss-meteo/provider";
 
 const { get_home_dir, get_user_config_dir } = imports.gi.GLib;
 const { File } = imports.gi.Gio;
@@ -69,23 +71,26 @@ export type Services =
 	"WeatherUnderground" |
 	"PirateWeather" |
 	"OpenMeteo" |
-	"OpenWeatherMap_OneCall";
+	"OpenWeatherMap_OneCall" |
+	"Swiss Meteo"
+	;
 
 export const ServiceClassMapping: ServiceClassMappingType = {
-	"OpenWeatherMap_Open": (app) => new OpenWeatherMapOpen(app),
-	"OpenWeatherMap_OneCall": (app) => new OpenWeatherMapOneCall(app),
-	"MetNorway": (app) => new MetNorway(app),
-	"Weatherbit": (app) => new Weatherbit(app),
-	"Tomorrow.io": (app) => new ClimacellV4(app),
-	"Met Office UK": (app) => new MetUk(app),
-	"US Weather": (app) => new USWeather(app),
-	"Visual Crossing": (app) => new VisualCrossing(app),
-	"DanishMI": (app) => new DanishMI(app),
-	"AccuWeather": (app) => new AccuWeather(app),
-	"DeutscherWetterdienst": (app) => new DeutscherWetterdienst(app),
-	"WeatherUnderground": (app) => new WeatherUnderground(app),
-	"PirateWeather": (app) => new PirateWeather(app),
-	"OpenMeteo": (app) => new OpenMeteo(app),
+	"OpenWeatherMap_Open": () => new OpenWeatherMapOpen(),
+	"OpenWeatherMap_OneCall": () => new OpenWeatherMapOneCall(),
+	"MetNorway": () => new MetNorway(),
+	"Weatherbit": () => new Weatherbit(),
+	"Tomorrow.io": () => new ClimacellV4(),
+	"Met Office UK": () => new MetUk(),
+	"US Weather": () => new USWeather(),
+	"Visual Crossing": () => new VisualCrossing(),
+	"DanishMI": () => new DanishMI(),
+	"AccuWeather": () => new AccuWeather(),
+	"DeutscherWetterdienst": () => new DeutscherWetterdienst(),
+	"WeatherUnderground": () => new WeatherUnderground(),
+	"PirateWeather": () => new PirateWeather(),
+	"OpenMeteo": () => new OpenMeteo(),
+	"Swiss Meteo": () => new SwissMeteo(),
 }
 
 export class Config {
@@ -207,24 +212,10 @@ export class Config {
 			return TimeZone.new_local().get_identifier();
 	}
 
-	private timezone: string | undefined = undefined;
-
-	/**
-	 * Selected location's timezone
-	 */
-	public get Timezone(): string | undefined {
-		return this.timezone;
-	}
-
-	public set Timezone(value: string | undefined) {
-		if (!value || value == "")
-			value = undefined;
-		this.timezone = value;
-	}
-
 	private readonly autoLocProvider: GeoIP;
 	private readonly geoClue: GeoClue;
 	private readonly geoLocationService: GeoLocation;
+	private readonly tzService = new GeoTimezone();
 
 	/** Stores and retrieves manual locations */
 	public readonly LocStore: LocationStore;
@@ -241,7 +232,7 @@ export class Config {
 		this.onLogLevelUpdated();
 		this.currentLocale = ConstructJsLocale(get_language_names());
 		this.countryCode = this.GetCountryCode(this.currentLocale);
-		this.autoLocProvider = new GeoIPFedora(this); // IP location lookup
+		this.autoLocProvider = new GeoIPFedora(); // IP location lookup
 		this.geoClue = new GeoClue();
 		this.geoLocationService = new GeoLocation();
 		this.InterfaceSettings = new Settings({ schema: "org.cinnamon.desktop.interface" });
@@ -335,31 +326,74 @@ export class Config {
 		return (!key || key == "");
 	};
 
+	public async GetLocation(cancellable: imports.gi.Gio.Cancellable, provider: WeatherProvider): Promise<LocationData | null> {
+		this.currentLocation = null;
+
+		let loc: LocationServiceResult | null = null;
+		switch (provider.locationType) {
+			case "postcode": {
+				const foundLoc = this.LocStore.FindLocation(this._location);
+				if (foundLoc != null) {
+					Logger.Debug("Manual Location exist in Saved Locations, retrieve.");
+					this.LocStore.SwitchToLocation(foundLoc);
+					this.settings.setValue(Keys.MANUAL_LOCATION.key, true);
+					loc = foundLoc;
+				}
+				else {
+					loc = {
+						entryText: this._location,
+						lat: -1,
+						lon: -1,
+					}
+				}
+				break;
+			}
+			case "coordinates": {
+				loc = await this.EnsureLocation(cancellable);
+				break;
+			}
+		}
+
+		if (loc == null) {
+			return null;
+		}
+
+		// Disable Getting timezone for now, it has serious latency issues sometimes.
+		// const tz = loc.timeZone ?? await this.tzService.GetTimezone(loc.lat, loc.lon, cancellable);
+
+		// if (tz == null)
+		// 	return null;
+
+		const result = {
+			...loc,
+			timeZone: loc.timeZone ?? this.UserTimezone,
+		}
+
+		this.InjectLocationToConfig(result);
+		return result;
+	}
+
 	/**
 	 * @returns LocationData null if failed to obtain
 	 * coordinates. Automatic mode looks up data through ip-api,
 	 * else it returns coordinates if it was entered. If text was entered,
 	 * it looks up coordinates via geolocation api
 	 */
-	public async EnsureLocation(cancellable: imports.gi.Gio.Cancellable): Promise<LocationData | null> {
-		this.currentLocation = null;
-
+	private async EnsureLocation(cancellable: imports.gi.Gio.Cancellable): Promise<LocationServiceResult | null> {
 		// Automatic location
 		if (!this._manualLocation) {
 			const geoClue = await this.geoClue.GetLocation(cancellable);
 			if (geoClue != null) {
 				Logger.Debug("Auto location obtained via GeoClue2.");
-				this.InjectLocationToConfig(geoClue);
 				return geoClue;
 			}
 
-			const location = await this.autoLocProvider.GetLocation(cancellable);
+			const location = await this.autoLocProvider.GetLocation(cancellable, this);
 			// User facing errors handled by provider
 			if (!location)
 				return null;
 
 			Logger.Debug("Auto location obtained via IP lookup.");
-			this.InjectLocationToConfig(location);
 			return location;
 		}
 
@@ -375,7 +409,7 @@ export class Config {
 		if (location != null) {
 			Logger.Debug("Manual Location exist in Saved Locations, retrieve.");
 			this.LocStore.SwitchToLocation(location);
-			this.InjectLocationToConfig(location, true);
+			this.settings.setValue(Keys.MANUAL_LOCATION.key, true);
 			return location;
 		}
 		// location not in storage
@@ -383,14 +417,12 @@ export class Config {
 			// Get Location
 			loc = loc.replace(" ", "");
 			const latLong = loc.split(",");
-			const location: LocationData = {
+			const location: LocationServiceResult = {
 				lat: Number.parseFloat(latLong[0]),
 				lon: Number.parseFloat(latLong[1]),
-				timeZone: DateTime.now().zoneName,
 				entryText: loc,
 			}
 			Logger.Debug("Manual Location is a coordinate, using it directly.");
-			this.InjectLocationToConfig(location);
 			return location;
 		}
 
@@ -406,12 +438,10 @@ export class Config {
 		location = this.LocStore.FindLocation(locationData.entryText);
 		if (location != null) {
 			Logger.Debug("Entered location was found in Saved Location, switch to it instead.");
-			this.InjectLocationToConfig(location);
 			this.LocStore.SwitchToLocation(location);
 			return location;
 		}
 		else {
-			this.InjectLocationToConfig(locationData);
 			return locationData;
 		}
 	}
@@ -447,7 +477,7 @@ export class Config {
 		this.settings.bind("selectedLogPath",
 			"_selectedLogPath", () => this.SelectedLogPathChanged.Invoke(this));
 
-		soupLib.SetUserAgent(this._userAgentStringOverride);
+		void soupLib.SetUserAgent(this._userAgentStringOverride);
 		this.UserAgentStringOverrideChanged.Subscribe(() => soupLib.SetUserAgent(this._userAgentStringOverride));
 	}
 

@@ -96,7 +96,8 @@ export function InjectValues(text: string, weather: WeatherData, config: Config,
 					.replace(/{{city}}/g, Literal(city))
 					.replace(/{{country}}/g, Literal(country))
 					.replace(/{{search_entry}}/g, Literal(searchEntry))
-					.replace(/{{last_updated}}/g, Literal(lastUpdatedTime));
+					.replace(/{{last_updated}}/g, Literal(lastUpdatedTime))
+					.replace(/{{br}}/g, Literal("\n"));
 	}
 
 	return  text.replace(/{t}/g, temp)
@@ -114,7 +115,8 @@ export function InjectValues(text: string, weather: WeatherData, config: Config,
 				.replace(/{city}/g, city)
 				.replace(/{country}/g, country)
 				.replace(/{search_entry}/g, searchEntry)
-				.replace(/{last_updated}/g, lastUpdatedTime);
+				.replace(/{last_updated}/g, lastUpdatedTime)
+				.replace(/{br}/g, "\n");
 }
 
 export function CapitalizeFirstLetter(description: string): string {
@@ -570,7 +572,18 @@ export function IsLangSupported(lang: string | null, languages: Array<string>): 
 };
 
 function HasIcon(icon: string, icon_type: imports.gi.St.IconType): boolean {
-	return IconTheme.get_default().has_icon(icon + (icon_type == IconType.SYMBOLIC ? '-symbolic' : ''))
+	const iconName = icon + (icon_type == IconType.SYMBOLIC ? '-symbolic' : '');
+
+	const result = IconTheme.get_default().has_icon(iconName);
+
+	if (!result) {
+		Logger.Debug(`${iconName} not found`);
+	}
+	else {
+		const iconInfo = IconTheme.get_default().lookup_icon(iconName, 16, icon_type == IconType.SYMBOLIC ? imports.gi.Gtk.IconLookupFlags.FORCE_SYMBOLIC : imports.gi.Gtk.IconLookupFlags.FORCE_REGULAR);
+		Logger.Debug(`${iconName} found at ${iconInfo?.get_filename()} and is ${iconInfo?.is_symbolic() ? "symbolic" : "regular"}`);
+	}
+	return result;
 }
 
 // --------------------------------------------------------

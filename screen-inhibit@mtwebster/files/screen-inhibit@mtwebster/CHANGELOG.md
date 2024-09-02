@@ -1,3 +1,12 @@
+### v2.1.2~20240624
+  * Fixes #6079. Definitely, I hope.
+
+### v2.1.1~20240621
+  * Fixes #6079. Definitely, I hope.
+
+### v2.1.0~20240618
+  * Fixes #6079.
+
 ### v2.0.1
   * From now on, this applet won't wait 10 seconds before disabling the screensaver at startup if requested. It does so as soon as possible.
 

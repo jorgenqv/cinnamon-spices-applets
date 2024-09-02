@@ -1088,14 +1088,15 @@ class Player extends PopupMenu.PopupMenuSection {
         this._cover_load_handle = 0;
         this._cover_path = null;
 
-        this.display_cover_button = new ControlButton("x-shape-image",
-            _("View cover"),
-            () => {
-                Util.spawnCommandLineAsync("xdg-open "+this._cover_path)
-            }
-        );
+        //~ this.display_cover_button = new ControlButton("image-x-generic",
+            //~ _("View cover"),
+            //~ () => {
+                //~ Util.spawnCommandLineAsync("xdg-open "+this._cover_path)
+            //~ },
+            //~ true
+        //~ );
         //~ this.coverBox.add_actor(this.display_cover_button.getActor());
-        //~ this.display_cover_button.hide();
+        //~ this.display_cover_button.getActor().show();
 
         // Track info (artist + title)
         this._artist = _("Unknown Artist");
@@ -1743,11 +1744,15 @@ class Sound150Applet extends Applet.TextIconApplet {
         Util.spawnCommandLineAsync("bash -c 'cd %s && chmod 755 *.sh'".format(PATH2SCRIPTS));
         Util.spawnCommandLineAsync("bash -C '"+ PATH2SCRIPTS +"/rm_tmp_files.sh'");
 
+        this.orientation = orientation;
+        this.isHorizontal = !(this.orientation == St.Side.LEFT || this.orientation == St.Side.RIGHT);
         this.setAllowedLayout(Applet.AllowedLayout.BOTH);
 
         this.metadata = metadata;
 
         this.oldPlayerIcon0 = null;
+
+        this.title_text = "";
 
         this.settings = new Settings.AppletSettings(this, metadata.uuid, instanceId);
         this.settings.bind("showOSDonStartup", "showOSDonStartup");
@@ -1951,12 +1956,19 @@ class Sound150Applet extends Applet.TextIconApplet {
 
         this._applet_context_menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-        let easy_effects = this.get_easy_effects();
+        let easy_effects = this.get_effects("Easy Effects");
         //~ log("easy_effects: "+easy_effects, true);
         if (easy_effects) {
             this.context_menu_item_easyEffects = new PopupMenu.PopupIconMenuItem(_("Easy Effects"), "easyeffects", St.IconType.SYMBOLIC);
             this.context_menu_item_easyEffects.connect("activate", async () => { Util.spawnCommandLine("%s".format(easy_effects)) });
             this._applet_context_menu.addMenuItem(this.context_menu_item_easyEffects);
+        }
+
+        let pulse_effects = this.get_effects("PulseEffects");
+        if (pulse_effects) {
+            this.context_menu_item_pulseEffects = new PopupMenu.PopupIconMenuItem(_("Pulse Effects"), "pulseeffects", St.IconType.SYMBOLIC);
+            this.context_menu_item_pulseEffects.connect("activate", async () => { Util.spawnCommandLine("%s".format(pulse_effects)) });
+            this._applet_context_menu.addMenuItem(this.context_menu_item_pulseEffects);
         }
 
         this.mute_out_switch.connect("toggled", () => this._toggle_out_mute());
@@ -2019,7 +2031,7 @@ class Sound150Applet extends Applet.TextIconApplet {
         dialog.open();
     }
 
-    get_easy_effects() {
+    get_effects(name) {
         var commandline = null;
         let appsys = Cinnamon.AppSystem.get_default();
         const dirs = [];
@@ -2041,12 +2053,13 @@ class Sound150Applet extends Applet.TextIconApplet {
                         let nextTypeDir;
                         while ((nextTypeDir = dirIter.next()) !== CMenu.TreeItemType.INVALID) {
                             const entry = dirIter.get_entry();
+                            if (entry == null) continue;
                             const appInfo = entry.get_app_info();
                             if (appInfo && !appInfo.get_nodisplay()) {
                                 const id = entry.get_desktop_file_id();
                                 const app = appsys.lookup_app(id);
                                 //~ log("APP NAME: "+app.get_name(), true);
-                                if (app.get_name() == "Easy Effects") {
+                                if (app.get_name() == name) {
                                     commandline = appInfo.get_commandline();
                                     break;
                                 }
@@ -2164,6 +2177,11 @@ class Sound150Applet extends Applet.TextIconApplet {
         this._outputVolumeSection._update();
     }
 
+    on_orientation_changed() {
+        this.orientation = orientation;
+        this.isHorizontal = !(this.orientation == St.Side.LEFT || this.orientation == St.Side.RIGHT);
+    }
+
     on_settings_changed() {
         if (this.playerControl && this._activePlayer)
             this.setAppletTextIcon(this._players[this._activePlayer], true);
@@ -2233,6 +2251,9 @@ class Sound150Applet extends Applet.TextIconApplet {
         for (let i in this._players)
             if (this._players[i])
                 this._players[i].destroy();
+
+        if (this._control)
+            this._control.close();
     }
 
     on_applet_clicked(event) {
@@ -2606,21 +2627,21 @@ class Sound150Applet extends Applet.TextIconApplet {
     }
 
     setAppletText(player) {
-        let title_text = "";
-        if (this.showtrack && player && player._playerStatus == "Playing") {
+        this.title_text = "";
+        if (this.isHorizontal && this.showtrack && player && player._playerStatus == "Playing") {
             if (player._artist == _("Unknown Artist")) { // should it be translated?
-                title_text = player._title;
+                this.title_text = player._title;
             }
             else {
-                title_text = player._title + ' - ' + player._artist;
+                this.title_text = player._title + ' - ' + player._artist;
             }
-            const glyphs = Util.splitByGlyph(title_text);
+            const glyphs = Util.splitByGlyph(this.title_text);
             if (glyphs.length > this.truncatetext) {
-                title_text = glyphs.slice(0, this.truncatetext - 3).join("") + "...";
+                this.title_text = glyphs.slice(0, this.truncatetext - 3).join("") + "...";
             }
         }
-        this.set_applet_label(title_text);
-        //~ log("setAppletText: title_text:\n"+title_text, true)
+        //this.set_applet_label(this.title_text);
+        //~ log("setAppletText: this.title_text:\n"+this.title_text, true)
     }
 
     setAppletTextIcon(player, icon) {
@@ -2769,6 +2790,7 @@ class Sound150Applet extends Applet.TextIconApplet {
 
     // will be called by an instance of #Player
     passDesktopEntry(entry) {
+        if (entry == null) return;
         // do we know already this player?
         for (let i = 0, l = this._knownPlayers.length; i < l; ++i) {
             if (this._knownPlayers[i] === entry)
@@ -3156,13 +3178,20 @@ class Sound150Applet extends Applet.TextIconApplet {
     }
 
     volume_near_icon() {
+        let label = "";
         if (this.showVolumeLevelNearIcon) {
-            this._applet_label.set_text(""+this.volume);
-            this.hide_applet_label(false);
+            //~ this._applet_label.set_text(""+this.volume+ (this.title_text.length>0) ? " - "+this.title_text : "");
+            label = ""+this.volume;
+            if (this.title_text.length>0)
+                label += " - "+this.title_text;
+            this.set_applet_label(label);
         } else {
-            this._applet_label.set_text("");
-            this.hide_applet_label(true);
+            //~ this._applet_label.set_text((this.title_text.length>0) ? ""+this.title_text : "");
+            if (this.title_text.length>0)
+                label = ""+this.title_text;
+            this.set_applet_label(label);
         }
+        this.hide_applet_label(label.length === 0);
     }
 
     _reset_colors() {

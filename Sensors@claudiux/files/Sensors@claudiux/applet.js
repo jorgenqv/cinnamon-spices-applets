@@ -235,9 +235,9 @@ class SensorsApplet extends Applet.TextApplet {
     this._variables();
 
     // Style class name:
-    let _monospace = (this.keep_size) ? "sensors-monospace" : "applet-box";
+    let _monospace = (this.keep_size) ? "sensors-monospace" : "applet-label"; //"applet-box";
     let _border_type = (this.remove_border) ? "-noborder" : "";
-    this.actor.set_style_class_name("%s sensors-label%s".format(_monospace, _border_type));
+    this.actor.set_style_class_name("%s sensors-label%s vertalign-%s".format(_monospace, _border_type, this.vertical_align));
 
     // Initialize some properties:
     this.isRunning = false;
@@ -270,6 +270,7 @@ class SensorsApplet extends Applet.TextApplet {
     this.s.bind("interval", "interval", this.on_settings_changed, null);
     this.s.bind("keep_size", "keep_size", this.updateUI, null);
     this.s.bind("char_size", "char_size", this.updateUI, null);
+    this.s.bind("vertical-align", "vertical_align", this.updateUI, null);
     this.s.bind("char_color_customized", "char_color_customized", this.updateUI, null);
     this.s.bind("char_color", "char_color", this.updateUI, null);
     this.s.bind("separator", "separator", this.updateUI, null);
@@ -675,7 +676,8 @@ class SensorsApplet extends Applet.TextApplet {
     // Fans:
     _tooltip = "";
     if (this.show_fan && this.fan_sensors.length !== 0
-        && this.data !== undefined && Object.keys(this.data["fans"]).length != 0) {
+        && this.data !== undefined && Object.keys(this.data["fans"]).length != 0
+        && !this.nothingToShow(this.fan_sensors, true)) {
       if (this.fan_sensors.length > 0) {
         for (let f of this.fan_sensors) {
           if (this.data["fans"][f["sensor"]] !== undefined) {
@@ -712,7 +714,8 @@ class SensorsApplet extends Applet.TextApplet {
     // Voltages:
     _tooltip = "";
     if (this.show_volt && this.volt_sensors.length !== 0
-        && this.data !== undefined && Object.keys(this.data["voltages"]).length != 0) {
+        && this.data !== undefined && Object.keys(this.data["voltages"]).length != 0
+        && !this.nothingToShow(this.volt_sensors, true)) {
       if (this.volt_sensors.length > 0) {
         for (let v of this.volt_sensors) {
           if (this.data["voltages"][v["sensor"]] !== undefined) {
@@ -757,7 +760,8 @@ class SensorsApplet extends Applet.TextApplet {
     //Intrusion:
     _tooltip = "";
     if (this.show_intrusion && this.intrusion_sensors.length !== 0
-        && this.data !== undefined && Object.keys(this.data["intrusions"]).length != 0) {
+        && this.data !== undefined && Object.keys(this.data["intrusions"]).length != 0
+        && !this.nothingToShow(this.intrusion_sensors, true)) {
       if (this.intrusion_sensors.length > 0) {
         for (let i of this.intrusion_sensors) {
           if (this.data["intrusions"][i["sensor"]] !== undefined) {
@@ -800,6 +804,22 @@ class SensorsApplet extends Applet.TextApplet {
     _tooltips = null
   }
 
+  nothingToShow(data, isForTooltip=false) {
+      if (data.length === 0) return true;
+      var nothing = true;
+      for (let d of data) {
+          if (!isForTooltip && d["show_in_panel"] === true) {
+              nothing = false;
+              break
+          }
+          if (isForTooltip && d["show_in_tooltip"] === true) {
+              nothing = false;
+              break
+          }
+      }
+      return nothing
+  }
+
   /**
    * updateUI: updates the user interface (that is displayed in the panel).
    */
@@ -813,7 +833,7 @@ class SensorsApplet extends Applet.TextApplet {
     var _appletLabel = "";
     let _monospace = (this.keep_size) ? "sensors-monospace" : "applet-box";
     let _border_type = (this.remove_border) ? "-noborder" : "";
-    var _actor_style = "%s sensors-label%s sensors-size%s".format(_monospace, _border_type, this.char_size);
+    var _actor_style = "%s sensors-label%s sensors-size%s vertalign-%s".format(_monospace, _border_type, this.char_size, this.vertical_align);
 
     let vertical = (this._orientation == St.Side.LEFT || this._orientation == St.Side.RIGHT);
     let sep = (vertical) ? "\n" : this.separator;
@@ -865,13 +885,20 @@ class SensorsApplet extends Applet.TextApplet {
     // Temperatures:
     var nbr_already_shown = 0;
     if (this.show_temp //&& this.temp_sensors.length !== 0
-        && this.data !== undefined && Object.keys(this.data["temps"]).length != 0) {
+        && this.data !== undefined
+        && Object.keys(this.data["temps"]).length != 0
+        && !this.nothingToShow(this.temp_sensors)) {
       for (let t of this.temp_sensors) {
         if (this.data["temps"][t["sensor"]] !== undefined) {
           if (t["show_in_panel"]) {
             let _temp = 1.0*this.data["temps"][t["sensor"]]["input"];
             _shown_name = "";
-            if (this.show_temp_name && !vertical) _shown_name = t["shown_name"]+" ";
+            if (this.show_temp_name) {
+              if (vertical)
+                _shown_name = t["shown_name"]+"\n";
+              else
+                _shown_name = t["shown_name"]+" ";
+            }
 
             if (nbr_already_shown === 0 && !this.remove_icons) this.label_parts.push("🌡");
 
@@ -888,9 +915,9 @@ class SensorsApplet extends Applet.TextApplet {
               1.0*t["crit_by_user"] : 1.0*this._get_crit_temp(this.data["temps"][t["sensor"]]);
 
             if (!isNaN(_temp_crit) && _temp_crit > 0 && _temp >= _temp_crit)
-              _actor_style = "%s sensors-critical%s sensors-size%s".format(_monospace, _border_type, this.char_size);
+              _actor_style = "%s sensors-critical%s sensors-size%s vertalign-%s".format(_monospace, _border_type, this.char_size, this.vertical_align);
             else if (!isNaN(_temp_max) && _temp_max > 0 && _temp >= _temp_max)
-              _actor_style = "%s sensors-high%s sensors-size%s".format(_monospace, _border_type, this.char_size);
+              _actor_style = "%s sensors-high%s sensors-size%s vertalign-%s".format(_monospace, _border_type, this.char_size, this.vertical_align);
 
             if (isNaN(_temp_crit)) _temp_crit = null;
             if (isNaN(_temp_max)) _temp_max = null;
@@ -904,7 +931,7 @@ class SensorsApplet extends Applet.TextApplet {
         }
       }
     }
-    if (this.show_temp && this.s.getValue("disktemp_is_user_readable") && this.temp_disks && this.temp_disks.length > 0) {
+    if (this.show_temp && this.s.getValue("disktemp_is_user_readable") && this.temp_disks && !this.nothingToShow(this.temp_disks)) {
       for (let disk of this.temp_disks) {
         let _disk_name = disk["disk"].trim();
         if (disk["show_in_panel"] && _disk_name.length > 0) {
@@ -917,17 +944,21 @@ class SensorsApplet extends Applet.TextApplet {
           let _temp_max = disk["high"];
           let _temp_crit = disk["crit"];
           if (_temp >= _temp_crit)
-            _actor_style = "%s sensors-critical%s sensors-size%s".format(_monospace, _border_type, this.char_size);
+            _actor_style = "%s sensors-critical%s sensors-size%s vertalign-%s".format(_monospace, _border_type, this.char_size, this.vertical_align);
           else if (_temp >= _temp_max)
-            _actor_style = "%s sensors-high%s sensors-size%s".format(_monospace, _border_type, this.char_size);
+            _actor_style = "%s sensors-high%s sensors-size%s vertalign-%s".format(_monospace, _border_type, this.char_size, this.vertical_align);
 
           if (this.journalize_temp)
             this.loggerTemp.log(_temp, _temp_max, _temp_crit, _disk_name, (this.use_fahrenheit) ? "°F" : "°C");
 
           _shown_name = "";
-          if (this.show_temp_name && !vertical)
-            _shown_name = (disk["shown_name"].length > 0) ? disk["shown_name"]+" " : _disk_name+" ";
-
+          if (this.show_temp_name) {
+            if (vertical)
+              _shown_name = (disk["shown_name"].length > 0) ? disk["shown_name"]+"\n" : _disk_name+"\n";
+            else
+              _shown_name = (disk["shown_name"].length > 0) ? disk["shown_name"]+" " : _disk_name+" ";
+          }
+          if (nbr_already_shown === 0 && !this.remove_icons) this.label_parts.push("🌡");
           let _label_part = _shown_name+this._formatted_temp(_temp, vertical);
 
           this.label_parts.push(""+_label_part);
@@ -938,17 +969,24 @@ class SensorsApplet extends Applet.TextApplet {
     }
 
     // Fans:
-    nbr_already_shown = 0;
-    if (this.show_fan && this.fan_sensors.length !== 0
+    if (this.show_fan && !this.nothingToShow(this.fan_sensors)
         && this.data !== undefined && Object.keys(this.data["fans"]).length != 0) {
 
+      if (vertical && nbr_already_shown > 0)
+        this.label_parts.push("━");
+      nbr_already_shown = 0;
       // This pushed "" is useless when there is no sensor to display:
       if (this.label_parts.length > 0) this.label_parts.push("");
 
       for (let f of this.fan_sensors) {
         if (f["show_in_panel"]) {
           _shown_name = "";
-          if (this.show_fan_name && !vertical) _shown_name = f["shown_name"]+" ";
+          if (this.show_fan_name) {
+            if (vertical)
+              _shown_name = f["shown_name"]+"\n";
+            else
+              _shown_name = f["shown_name"]+" ";
+          }
 
           let _fan = 1.0*this.data["fans"][f["sensor"]]["input"];
           if (f["user_formula"] && f["user_formula"].length > 0) {
@@ -956,14 +994,14 @@ class SensorsApplet extends Applet.TextApplet {
             _fan = 1.0*eval(_formula_result)
           }
 
-          if (nbr_already_shown === 0 && !this.remove_icons) this.label_parts.push("🤂");
+          if (nbr_already_shown === 0 && !this.remove_icons) this.label_parts.push("🤂"); //✇
           this.label_parts.push(_shown_name+this._formatted_fan(_fan, vertical));
 
           let _fan_min = (f["min_by_user"] && f["min_by_user"].length > 0) ?
             1.0*f["min_by_user"] : 1.0*this._get_min_fan(this.data["fans"][f["sensor"]]);
 
           if (_fan < _fan_min)
-            _actor_style = "%s sensors-critical%s sensors-size%s".format(_monospace, _border_type, this.char_size);
+            _actor_style = "%s sensors-critical%s sensors-size%s vertalign-%s".format(_monospace, _border_type, this.char_size, this.vertical_align);
 
           if (this.journalize_fan)
             this.loggerFan.log(_fan, _fan_min, f["sensor"]);
@@ -977,10 +1015,12 @@ class SensorsApplet extends Applet.TextApplet {
     }
 
     // Voltages:
-    nbr_already_shown = 0;
-    if (this.show_volt && this.volt_sensors.length !== 0
+    if (this.show_volt && !this.nothingToShow(this.volt_sensors)
         && this.data !== undefined && Object.keys(this.data["voltages"]).length != 0) {
 
+      if (vertical && nbr_already_shown > 0)
+        this.label_parts.push("━");
+      nbr_already_shown = 0;
       // This pushed "" is useless when there is no sensor to display:
       if (this.label_parts.length > 0) this.label_parts.push("");
 
@@ -988,7 +1028,12 @@ class SensorsApplet extends Applet.TextApplet {
         if (v["show_in_panel"]) {
           let _voltage = 1.0*this.data["voltages"][v["sensor"]]["input"];
           _shown_name = "";
-          if (this.show_volt_name && !vertical) _shown_name = v["shown_name"]+" ";
+          if (this.show_volt_name) {
+            if (vertical)
+            _shown_name = v["shown_name"]+"\n";
+            else
+              _shown_name = v["shown_name"]+" ";
+          }
 
           if (v["user_formula"] && v["user_formula"].length > 0) {
             let _formula_result = v["user_formula"].replace(/\$/g, _voltage);
@@ -1006,7 +1051,7 @@ class SensorsApplet extends Applet.TextApplet {
           let _voltage_min = (_min_defined_by_user && _min_defined_by_user.length > 0) ? 1.0*_min_defined_by_user : 1.0*this._get_min_voltage(this.data["voltages"][v["sensor"]]);
 
           if (_voltage >= _voltage_max || _voltage < _voltage_min)
-            _actor_style = "%s sensors-critical%s sensors-size%s".format(_monospace, _border_type, this.char_size);
+            _actor_style = "%s sensors-critical%s sensors-size%s vertalign-%s".format(_monospace, _border_type, this.char_size, this.vertical_align);
 
           if (this.journalize_volt)
             this.loggerVoltage.log(_voltage, _voltage_min, _voltage_max, v["sensor"]);
@@ -1020,9 +1065,12 @@ class SensorsApplet extends Applet.TextApplet {
     }
 
     // Intrusion:
-    nbr_already_shown = 0;
-    if (this.show_intrusion && !this.strictly_positive_intrusion && this.intrusion_sensors.length !== 0
+    if (this.show_intrusion && !this.strictly_positive_intrusion && !this.nothingToShow(this.intrusion_sensors)
         && this.data !== undefined && Object.keys(this.data["intrusions"]).length != 0) {
+
+      if (vertical && nbr_already_shown > 0)
+        this.label_parts.push("━");
+      nbr_already_shown = 0;
 
       // This pushed "" is useless when there is no sensor to display:
       if (this.label_parts.length > 0) this.label_parts.push("");
@@ -1031,7 +1079,12 @@ class SensorsApplet extends Applet.TextApplet {
         if (i["show_in_panel"]) {
           let _intrusion = this.data["intrusions"][i["sensor"]]["alarm"];
           _shown_name = "";
-          if (this.show_intrusion_name && !vertical) _shown_name = i["shown_name"]+" ";
+          if (this.show_intrusion_name) {
+            if (vertical)
+              _shown_name = i["shown_name"]+"\n";
+            else
+              _shown_name = i["shown_name"]+" ";
+          }
 
           if (nbr_already_shown === 0 && !this.remove_icons) this.label_parts.push("⮿");
           this.label_parts.push(_shown_name+this._formatted_intrusion(_intrusion, vertical));
@@ -1039,7 +1092,7 @@ class SensorsApplet extends Applet.TextApplet {
           let _intrusion_alarm = this._get_alarm_intrusion(this.data["intrusions"][i["sensor"]]);
 
           if (_intrusion_alarm)
-            _actor_style = "%s sensors-critical%s sensors-size%s".format(_monospace, _border_type, this.char_size);
+            _actor_style = "%s sensors-critical%s sensors-size%s vertalign-%s".format(_monospace, _border_type, this.char_size, this.vertical_align);
 
           if (this.journalize_intrusion)
             this.loggerIntrusion.log(_intrusion_alarm, i["sensor"]);
@@ -1051,6 +1104,7 @@ class SensorsApplet extends Applet.TextApplet {
 
       //~ if (nbr_already_shown === 0) this.label_parts.pop(); // Deletes the useless "" pushed in this.label_parts.
     }
+    //~ global.log("_actor_style: "+_actor_style);
 
     if (this.label_parts.length === 0) {
       _appletLabel = this._get_default_applet_label();
@@ -1085,6 +1139,8 @@ class SensorsApplet extends Applet.TextApplet {
       }
     }
     //~ global.log("_appletLabel: '"+_appletLabel+"'");
+    if (vertical)
+      _appletLabel = _appletLabel.replace(this.separator, "\n");
 
     this.set_applet_label(_appletLabel);
 

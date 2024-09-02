@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.6.4
+
+- Add attribution to nominatim
+- Remove app dependency from providers to make them more isolated
+- Add Swiss Meteo provider
+- Fix [weather@mockturtl: Sun icon not showing anymore with tommorrow.io api #6281](https://github.com/linuxmint/cinnamon-spices-applets/issues/6281)
+- Filter out alerts for tomorrow.io that are not for the user's location
+- Fix hourly box open/close animation not respecting global effect setting
+- Fix [weather@mockturtl: Service Error 403 on all data sources #6087](https://github.com/linuxmint/cinnamon-spices-applets/issues/6087)
+
+## 3.6.3
+
+- Fix [[weather@mockturtl] Visual Crossing wind speed #6086](https://github.com/linuxmint/cinnamon-spices-applets/issues/6086)
+- Fix [Weather applet not working #6137](https://github.com/linuxmint/cinnamon-spices-applets/issues/6137)
+
+## 3.6.2
+
+- Fix applet output breaking with various weather providers if Automatic location is used.
+- Fix
+  [weather@mockturtl - Sunrise Invalid Date Time when using weather provider DMI Denmark #6058](https://github.com/linuxmint/cinnamon-spices-applets/issues/6058)
+
 ## 3.6.1
 
 - Make translating conditions more consistent across all providers and clarify purpose of "Translate conditions" settings toggle

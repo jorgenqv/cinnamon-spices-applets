@@ -1,3 +1,10 @@
+### v2.1.2~20240731
+  * Adds "Easy Effects" entry in context menu when easyeffects is present.
+  * To install easyeffects (for pipewire): `apt install easyeffects calf-plugins`
+
+### v2.1.1~20240609
+  * Prevents Cvc.MixerControl from being executed more than once.
+
 ### v2.1.0~20240519
   * Improves the installation of dependencies.
 

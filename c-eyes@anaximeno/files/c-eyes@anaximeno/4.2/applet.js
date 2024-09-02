@@ -205,7 +205,7 @@ class Eye extends Applet.Applet {
 			{
 				key: "deactivate-on-fullscreen",
 				value: "deactivate_on_fullscreen",
-				cb: null,
+				cb: this.on_fullscreen_changed.bind(this),
 			},
 			{
 				key: "eye-vertical-padding",
@@ -217,7 +217,7 @@ class Eye extends Applet.Applet {
 			{
 				key: "deactivate-effects-on-fullscreen",
 				value: "deactivate_effects_on_fullscreen",
-				cb: null,
+				cb: this.on_fullscreen_changed.bind(this),
 			}
 		];
 
@@ -245,6 +245,13 @@ class Eye extends Applet.Applet {
 
 		this.signals = new SignalManager.SignalManager(null);
 		this.signals.connect(global.screen, 'in-fullscreen-changed', this.on_fullscreen_changed, this);
+		this.signals.connect(global.screen, 'workspace-switched', () => {
+			// If the eye is refreshed exactly during the workspace switch process it's possible that the position
+			// of the panel is not correctly accessed, so the position of the eye cannot be estimated correctly,
+			// resulting in the eye looking at the wrong direction, to avoid that we will give it some timeout and
+			// wait first for the switch process to complete.
+			Util.setTimeout(() => this.on_property_updated(), 400);
+		}, this);
 
 		Atspi.init();
 
@@ -317,14 +324,16 @@ class Eye extends Applet.Applet {
 			panelIsInCurrentMonitor = Util.find(panelsInMonitor, (value, i, arr) => this.panel === value) != null;
 		}
 
-		const shouldHideEye = monitorIsInFullscreen && panelIsInCurrentMonitor;
-
-		if (this.deactivate_on_fullscreen) {
-			this.set_active(!shouldHideEye);
+		if (this.deactivate_on_fullscreen && panelIsInCurrentMonitor) {
+			this.set_active(!monitorIsInFullscreen);
+		} else {
+			this.set_active(true);
 		}
 
 		if (this.deactivate_effects_on_fullscreen) {
-			this.set_mouse_circle_active(!shouldHideEye && this.mouse_click_show);
+			this.set_mouse_circle_active(!monitorIsInFullscreen && this.mouse_click_show);
+		} else {
+			this.set_mouse_circle_active(this.mouse_click_show);
 		}
 	}
 

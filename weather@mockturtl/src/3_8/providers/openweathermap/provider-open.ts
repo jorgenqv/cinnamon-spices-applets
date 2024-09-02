@@ -1,4 +1,4 @@
-import type { Services, Config } from "../../config";
+import type { Config, Services } from "../../config";
 import type { HTTPParams} from "../../lib/httpLib";
 import { HttpLib } from "../../lib/httpLib";
 import type { LocationData } from "../../types";
@@ -24,7 +24,7 @@ export class OpenWeatherMapOpen extends BaseProvider {
 
 
 	public override async GetWeather(loc: LocationData, cancellable: imports.gi.Gio.Cancellable, config: Config): Promise<WeatherData | null> {
-		const params: HTTPParams = this.ConstructParams(loc);
+		const params: HTTPParams = this.ConstructParams(loc, config);
 		const current = await HttpLib.Instance.LoadJsonSimple<OWMWeatherResponse>({
 			url: "https://api.openweathermap.org/data/2.5/weather",
 			cancellable,
@@ -41,12 +41,12 @@ export class OpenWeatherMapOpen extends BaseProvider {
 		}
 
 		return {
-			...OWMWeatherToWeatherData(current, !!params.lang, config.Timezone),
-			forecasts: OWMDailyForecastsToData(daily.list, !!params.lang, config.Timezone)
+			...OWMWeatherToWeatherData(current, !!params.lang, loc.timeZone),
+			forecasts: OWMDailyForecastsToData(daily.list, !!params.lang, loc.timeZone)
 		};
 	}
 
-	private ConstructParams(loc: LocationData): HTTPParams {
+	private ConstructParams(loc: LocationData, config: Config): HTTPParams {
 		const params: HTTPParams = {
 			lat: loc.lat,
 			lon: loc.lon,
@@ -54,8 +54,8 @@ export class OpenWeatherMapOpen extends BaseProvider {
 		};
 
 		// Append Language if supported and enabled
-		const locale: string = ConvertLocaleToOWMLang(this.app.config.currentLocale);
-		if (this.app.config._translateCondition && IsLangSupported(locale, OWM_SUPPORTED_LANGS)) {
+		const locale: string = ConvertLocaleToOWMLang(config.currentLocale);
+		if (config._translateCondition && IsLangSupported(locale, OWM_SUPPORTED_LANGS)) {
 			params.lang = locale;
 		}
 		return params;

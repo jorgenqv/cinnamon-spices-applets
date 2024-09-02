@@ -3904,6 +3904,10 @@ class WebRadioReceiverAndRecorder extends TextIconApplet {
     keybindingManager.removeHotKey("shortcutNext");
     keybindingManager.removeHotKey("shortcutPrevious");
 
+    // Close Cvc.MixerControl:
+    if (this._control)
+      this._control.close();
+
     // Finalize settings:
     this.settings.finalize();
   }
@@ -4706,6 +4710,15 @@ class WebRadioReceiverAndRecorder extends TextIconApplet {
       this.context_menu_item_pulseEffects.connect('activate', async () => { spawnCommandLine("pulseeffects") });
       if (items.indexOf(this.context_menu_item_pulseEffects) == -1) {
         this._applet_context_menu.addMenuItem(this.context_menu_item_pulseEffects);
+      }
+    }
+
+    // EasyEffects (if any)
+    if (find_program_in_path("easyeffects") && this.context_menu_item_easyEffects == null) {
+      this.context_menu_item_easyEffects = new PopupIconMenuItem(_("Easy Effects"), "easyeffects", IconType.SYMBOLIC);
+      this.context_menu_item_easyEffects.connect('activate', async () => { spawnCommandLine("easyeffects") });
+      if (items.indexOf(this.context_menu_item_easyEffects) == -1) {
+        this._applet_context_menu.addMenuItem(this.context_menu_item_easyEffects);
       }
     }
 
