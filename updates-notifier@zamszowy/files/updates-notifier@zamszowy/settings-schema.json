@@ -1,0 +1,87 @@
+{
+    "section1": {
+        "type": "section",
+        "description": "Settings"
+    },
+    "update-refresh": {
+        "type": "entry",
+        "default": "60",
+        "description": "Minutes to wait before refreshing updates"
+    },
+    "show-firmware": {
+        "type": "switch",
+        "default": true,
+        "description": "Show firmware updates"
+    },
+    "hide-applet": {
+        "type": "switch",
+        "default": false,
+        "description": "Hide applet if there are no updates"
+    },
+    "different-levels": {
+        "type": "switch",
+        "default": true,
+        "description": "Show different applet icon for different updgradeable packages count"
+    },
+    "level-1": {
+        "type": "entry",
+        "default": "100",
+        "description": "Show low level icon when updates count is between 0 and this value ",
+        "dependency": "different-levels"
+    },
+    "level-2": {
+        "type": "entry",
+        "default": "200",
+        "description": "Show medium level icon when updates count is between low level value and this value. Show high level icon if it's higher than this value.",
+        "dependency": "different-levels"
+    },
+    "section2": {
+        "type": "section",
+        "description": "Applet click"
+    },
+    "show-window-on-click": {
+        "type": "switch",
+        "default": false,
+        "description": "Show updates window on left click and menu entries on right click"
+    },
+    "refresh-when-no-updates": {
+        "type": "switch",
+        "default": true,
+        "description": "Refresh updates list on left click if there are no updates",
+        "dependency": "show-window-on-click"
+    },
+    "section3": {
+        "type": "section",
+        "description": "Menu"
+    },
+    "commandUpdate-show": {
+        "type": "switch",
+        "default": true,
+        "description": "Show \"Check for new updates\" command"
+    },
+    "commandUpgrade-show": {
+        "type": "switch",
+        "default": true,
+        "description": "Show \"Upgrade packages\" command"
+    },
+    "commandUpgrade": {
+        "type": "entry",
+        "default": "pkcon update",
+        "description": "Upgrade packages command:",
+        "dependency": "commandUpgrade-show"
+    },
+    "section4": {
+        "type": "section",
+        "description": "Theme"
+    },
+    "icon-style": {
+        "type": "combobox",
+        "description": "Icon style",
+        "default": "light",
+        "options": {
+            "dark": "dark",
+            "light": "light",
+            "symbolic": "symbolic"
+        }
+    }
+}

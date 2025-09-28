@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: https://github.com/linuxmint/cinnamon-spices-applets/"
 "issues\n"
-"POT-Creation-Date: 2024-07-03 19:28+0200\n"
-"PO-Revision-Date: 2024-07-05 10:25+0200\n"
+"POT-Creation-Date: 2025-03-30 14:17+0200\n"
+"PO-Revision-Date: 2025-08-27 18:03+0200\n"
 "Last-Translator: Dragone2 <dragone2@risposteinformatiche.it>\n"
 "Language-Team: \n"
 "Language: it\n"
@@ -17,106 +17,112 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.0.1\n"
+"X-Generator: Poedit 3.4.2\n"
 
 #. metadata.json->name
-#: applet.js:214
+#. applet.js:225 applet_OLD.js:235
 msgid "Sensors Monitor"
 msgstr "Monitoraggio Sensori"
 
-#: applet.js:394
+#. applet.js:465 applet_OLD.js:418
 msgid "Suspended"
 msgstr "Sospeso"
 
-#: applet.js:612 applet.js:654
+#. applet.js:732 applet.js:773 applet_OLD.js:638 applet_OLD.js:682
 msgid "high:"
 msgstr "alto:"
 
-#: applet.js:612 applet.js:614 applet.js:654 applet.js:656 applet.js:697
+#. applet.js:732 applet.js:735 applet.js:773 applet.js:775 applet.js:816
+#. applet_OLD.js:638 applet_OLD.js:642 applet_OLD.js:682 applet_OLD.js:684
+#. applet_OLD.js:726
 msgid "n/a"
 msgstr "n/d"
 
-#: applet.js:614 applet.js:656
+#. applet.js:735 applet.js:775 applet_OLD.js:642 applet_OLD.js:684
 msgid "crit:"
 msgstr "crit:"
 
-#: applet.js:697 applet.js:740
+#. applet.js:816 applet.js:860 applet_OLD.js:726 applet_OLD.js:770
 msgid "min:"
 msgstr "min:"
 
-#: applet.js:742
+#. applet.js:862 applet_OLD.js:772
 msgid "max:"
 msgstr "max:"
 
-#: applet.js:770
+#. applet.js:891 applet_OLD.js:801
 msgid "No intrusion detected"
 msgstr "Nessuna intrusione rilevata"
 
-#: applet.js:770
+#. applet.js:891 applet_OLD.js:801
 msgid "INTRUSION DETECTED!"
 msgstr "INTRUSIONE RILEVATA!"
 
-#: applet.js:790
+#. applet.js:911 applet_OLD.js:821
 msgid "Must be configured!"
 msgstr "Deve essere configurato!"
 
-#: applet.js:1125
+#. applet.js:1275 applet_OLD.js:1208
 msgid "Settings"
 msgstr "Impostazioni"
 
-#: applet.js:1125
+#. applet.js:1275 applet_OLD.js:1208
 msgid ":"
 msgstr ":"
 
 #. settings-schema.json->page_General->title
-#: applet.js:1132
+#. applet.js:1282 applet_OLD.js:1215
 msgid "⚙ General"
 msgstr "⚙ Generale"
 
-#: applet.js:1142
-msgid "🌡 Temperature sensors"
-msgstr "🌡 Sensori di temperatura"
+#. applet.js:1298 applet_OLD.js:1231
+#, javascript-format
+msgid "%s Temperature sensors"
+msgstr "%s Sensori di temperatura"
 
-#: applet.js:1152
-msgid "🤂 Fan sensors"
-msgstr "🤂 Sensori delle ventole"
+#. applet.js:1314 applet_OLD.js:1247
+#, javascript-format
+msgid "%s Fan sensors"
+msgstr "%s Sensori delle ventole"
 
-#: applet.js:1162
-msgid "🗲 Voltage sensors"
-msgstr "🗲 Sensori di tensione"
+#. applet.js:1330 applet_OLD.js:1263
+#, javascript-format
+msgid "%s Voltage sensors"
+msgstr "%s Sensori di tensione"
 
-#: applet.js:1172
-msgid "⮿ Intrusion sensors"
-msgstr "⮿ Sensori di intrusione"
+#. applet.js:1346 applet_OLD.js:1279
+#, javascript-format
+msgid "%s Intrusion sensors"
+msgstr "%s Sensori di intrusione"
 
 #. settings-schema.json->xsensors->description
-#: applet.js:1193
+#. applet.js:1365 applet_OLD.js:1306
 msgid "Run xsensors"
 msgstr "Esegui xsensors"
 
-#: applet.js:1202
+#. applet.js:1374 applet_OLD.js:1315
 msgid "Suspend Sensors"
 msgstr "Sospendi i sensori"
 
-#: applet.js:1213
+#. applet.js:1385 applet_OLD.js:1326
 msgid "Reload this applet"
 msgstr "Ricarica questa applet"
 
-#: applet.js:1514
+#. applet.js:1707 applet_OLD.js:1656
 #, javascript-format
 msgid "Are you sure you want to remove '%s'?"
 msgstr "Rimuovere '%s'?"
 
-#: lib/checkDependencies.js:317
+#. lib/checkDependencies.js:353
 #, javascript-format
 msgid "The applet %s is fully functional."
 msgstr "L'applet %s è totalmente funzionante."
 
-#: lib/checkDependencies.js:318
+#. lib/checkDependencies.js:354
 msgid "All dependencies are installed"
 msgstr "Tutte le dipendenze sono installate"
 
-#: lib/checkDependencies.js:346
+#. lib/checkDependencies.js:383
 msgid ""
 "You appear to be missing some of the programs required for this applet to "
 "have all its features."
@@ -124,62 +130,66 @@ msgstr ""
 "Sembra che manchino alcuni dei programmi necessari affinché questa applet "
 "abbia tutte le sue funzionalità."
 
-#: lib/checkDependencies.js:347
-msgid "Please execute, in the just opened terminal, the commands:"
-msgstr "Si prega di eseguire, nel terminale appena aperto, i comandi:"
+#. lib/checkDependencies.js:385
+msgid "Please install these packages:"
+msgstr "Si prega di installare questi pacchetti:"
 
-#: lib/checkDependencies.js:348
+#. lib/checkDependencies.js:389 lib/checkDependencies.js:399
 msgid "Some dependencies are not installed!"
 msgstr "Alcune dipendenze non sono installate!"
 
-#: lib/util.js:244
+#. lib/checkDependencies.js:401
+msgid "Install these packages now"
+msgstr "Installa questi pacchetti ora"
+
+#. lib/util.js:244
 #, javascript-format
 msgid "Execution of '%s' failed:"
 msgstr "Esecuzione di '%s' fallita:"
 
-#: scripts/xs.py:206
+#. scripts/xs.py:206
 msgid "Previous instance"
 msgstr "Istanza precedente"
 
-#: scripts/xs.py:210
+#. scripts/xs.py:210
 msgid "Next instance"
 msgstr "Istanza successiva"
 
-#: scripts/xs.py:219
+#. scripts/xs.py:219
 msgid "More options"
 msgstr "Più opzioni"
 
-#: scripts/xs.py:225
+#. scripts/xs.py:225
 msgid "Import from a file"
 msgstr "Importa da un file"
 
-#: scripts/xs.py:230
+#. scripts/xs.py:230
 msgid "Export to a file"
 msgstr "Esporta su file"
 
-#: scripts/xs.py:235
+#. scripts/xs.py:235
 msgid "Reset to defaults"
 msgstr "Ripristina le impostazioni predefinite"
 
-#: scripts/xs.py:244
+#. scripts/xs.py:244
 #, python-format
 msgid "Reload %s"
 msgstr "Ricarica %s"
 
-#: scripts/xs.py:425
+#. scripts/xs.py:425
 #, python-format
 msgid "Settings for %s"
 msgstr "Impostazioni di %s"
 
-#: scripts/xs.py:517
+#. scripts/xs.py:517
 msgid "Select or enter file to export to"
 msgstr "Seleziona o inserisci il file in cui esportare"
 
-#: scripts/xs.py:525 scripts/xs.py:546
+#. scripts/xs.py:525 scripts/xs.py:546
 msgid "JSON files"
 msgstr "File JSON"
 
-#: scripts/xs.py:539
+#. scripts/xs.py:539
 msgid "Select a JSON file to import"
 msgstr "Seleziona un file JSON da importare"
 
@@ -193,12 +203,16 @@ msgstr ""
 "(CPU - GPU - Alimentatore), Velocità Ventole, Tensioni, Intrusioni. Avvisa "
 "con cambiamenti di colore quando un valore raggiunge o supera il suo limite."
 
+#. metadata.json->contributors
+msgid "claudiux: Author. JEleniel: support for NVidia video cards."
+msgstr "claudiux: Autore. JEleniel: supporto per schede video NVidia."
+
 #. settings-schema.json->page_Temperatures->title
-msgid "🌡 Temperature"
-msgstr "🌡 Temperatura"
+msgid "⦿ Temperature"
+msgstr "⦿ Temperatura"
 
 #. settings-schema.json->page_Fans->title
-msgid "🤂 Fan"
+msgid "𖣘 Fan"
 msgstr "🤂 Ventola"
 
 #. settings-schema.json->page_Voltages->title
@@ -388,6 +402,30 @@ msgstr ""
 msgid "Character size (% of standard size)"
 msgstr "Dimensione carattere (% della dimensione standard)"
 
+#. settings-schema.json->horizontal_width->description
+msgid "Display width (pixels) for horizontal panels"
+msgstr "Larghezza di visualizzazione (pixel) per i pannelli orizzontali"
+
+#. settings-schema.json->horizontal_width->tooltip
+msgid "0 means automatic. This value does not include border."
+msgstr "0 significa automatico. Questo valore non include il bordo."
+
+#. settings-schema.json->separator_type->options
+msgid "(none)"
+msgstr "(nessuno)"
+
+#. settings-schema.json->separator_type->options
+msgid "blank"
+msgstr "vuoto"
+
+#. settings-schema.json->separator_type->options
+msgid "bar"
+msgstr "barra"
+
+#. settings-schema.json->separator_type->description
+msgid "Separator"
+msgstr "Separatore"
+
 #. settings-schema.json->char_color_customized->description
 msgid "Customize Text Color"
 msgstr "Personalizza il colore del testo"
@@ -396,16 +434,13 @@ msgstr "Personalizza il colore del testo"
 msgid "Text Color"
 msgstr "Colore del testo"
 
-#. settings-schema.json->separator->description
-msgid "Separator"
-msgstr "Separatore"
+#. settings-schema.json->crit_color->description
+msgid "Critical Value Color"
+msgstr "Colore Valore Critico"
 
-#. settings-schema.json->separator->tooltip
-msgid ""
-"The string used to separate values in horizontal orientation. Default is '│'."
-msgstr ""
-"La stringa utilizzata per separare i valori nell'orientamento orizzontale. "
-"L'impostazione predefinita è '│'."
+#. settings-schema.json->high_color->description
+msgid "High Value Color"
+msgstr "Colore Valore Elevato"
 
 #. settings-schema.json->remove_border->description
 msgid "Remove border line"
@@ -499,8 +534,18 @@ msgstr ""
 "visualizzato' dei sensori selezionati nell'elenco sottostante. Senza effetto "
 "nei pannelli verticali."
 
+#. settings-schema.json->chars_temp->tooltip
+msgid "The first emoji in this list is used for temperature"
+msgstr "La prima emoji in questo elenco è usata per la temperatura"
+
+#. settings-schema.json->chars_temp->columns->title
+#. settings-schema.json->chars_fan->columns->title
+#. settings-schema.json->chars_volt->columns->title
+#. settings-schema.json->chars_intrusion->columns->title
+msgid "Emoji"
+msgstr "Emoji"
+
 #. settings-schema.json->strictly_positive_temp->description
-#. settings-schema.json->strictly_positive_fan->description
 #. settings-schema.json->strictly_positive_volt->description
 msgid "Show only strictly positive values"
 msgstr "Mostra solo valori rigorosamente positivi"
@@ -685,6 +730,14 @@ msgstr ""
 "di consultare l'aiuto.\n"
 "Valori alti e critici: cfr. manuale tecnico del disco."
 
+#. settings-schema.json->chars_fan->tooltip
+msgid "The first emoji in this list is used for fan"
+msgstr "La prima emoji in questo elenco è usata per la ventola"
+
+#. settings-schema.json->strictly_positive_fan->description
+msgid "Show only positive or zero values"
+msgstr "Mostra solo valori positivi o zero"
+
 #. settings-schema.json->fan_unit->description
 msgid "Abbreviation of \"Rotations per minute\""
 msgstr "Abbreviazione di \"Rotazioni al minuto\""
@@ -728,6 +781,10 @@ msgstr ""
 "   Utilizzare $ come valore restituito dal sensore.\n"
 "   È possibile utilizzare le 4 operazioni (+-*/) e le parentesi.\n"
 "   Esempio: $*1,1+0,5"
+
+#. settings-schema.json->chars_volt->tooltip
+msgid "The first emoji in this list is used for voltage"
+msgstr "La prima emoji in questo elenco è usata per la tensione"
 
 #. settings-schema.json->volt_unit->description
 msgid "Voltage unit"
@@ -802,6 +859,10 @@ msgstr ""
 " Se visualizzare o meno in questa etichetta dell'applet il 'Nome "
 "visualizzato' dei sensori selezionati nell'elenco sottostante. Senza effetto "
 "nei pannelli verticali."
+
+#. settings-schema.json->chars_intrusion->tooltip
+msgid "The first emoji in this list is used for intrusion"
+msgstr "La prima emoji in questo elenco è usata per l'intrusione"
 
 #. settings-schema.json->strictly_positive_intrusion->description
 msgid "Show in the panel only when an intrusion was detected"
@@ -878,7 +939,7 @@ msgstr ""
 "il nome e il percorso del file da monitorare (/sys/class/...)."
 
 #. settings-schema.json->report->description
-#: scripts/show_sensor_values.sh:5
+#. scripts/show_sensor_values.sh:5
 msgid "Example of sensor values from this computer"
 msgstr "Esempio di valori del sensore da questo computer"
 
