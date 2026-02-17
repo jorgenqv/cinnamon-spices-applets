@@ -48,6 +48,11 @@ function unpackPackageSignal(params) {
     return tuples;
 }
 
+const RefreshMode = Object.freeze({
+    UPDATES: 'updates',
+    PACKAGES: 'packages'
+});
+
 Gettext.bindtextdomain(UUID, GLib.get_home_dir() + '/.local/share/locale');
 function _(str) { return Gettext.dgettext(UUID, str); }
 
@@ -63,8 +68,6 @@ UpdatesNotifier.prototype = {
         this.applet_path = metadata.path;
 
         Applet.TextIconApplet.prototype._init.call(this, orientation, panel_height, instance_id);
-
-        this.hide_applet_label(true);
 
         this.menuManager = new PopupMenu.PopupMenuManager(this);
         this.menu = new Applet.AppletPopupMenu(this, orientation);
@@ -88,21 +91,30 @@ UpdatesNotifier.prototype = {
         this.settings.bind("level-2", "level2", this._update, null);
 
         this.settings.bind("refresh-when-no-updates", "refreshWhenNoUpdates", this._update, null);
-        this.settings.bind("show-firmware", "showFirmware", this._refreshUpdatesInfo, null);
+        this.settings.bind("show-firmware", "showFirmware", () => this._refreshUpdatesInfo(RefreshMode.UPDATES, true), null);
         this.settings.bind("show-window-on-click", "showWindowOnClick", this._update, null);
         this.settings.bind("commandUpdate-show", "commandUpdateShow", this._update, null);
         this.settings.bind("commandUpgrade", "commandUpgrade", null, null);
         this.settings.bind("commandUpgrade-show", "commandUpgradeShow", this._update, null);
 
         this.settings.bind("icon-style", "icon_style", this._update, null);
+        this.settings.bind("show-label", "show_label", this._update, null);
+        this.settings.bind("label-font-size", "labelFontSize", this._update, null);
+        this.settings.bind("label-font-weight", "labelFontWeight", this._update, null);
+        this.settings.bind("label-vertical-position", "labelVerticalPosition", this._update, null);
 
         this.rightMenuItemsIndexes = new Array();
 
-        this.set_applet_icon_name('configure');
+        this.hide_applet_label(true);
+        this.set_applet_icon_name('update-notifier-settings');
 
         this.updates = new Updates();
         this.checkingInProgress = false;
         this.pendingUpdate = false;
+        this.lastRefreshTime = 0;
+
+        this.hasFirmwareUpdates = false;
+        this.hasError = false;
 
         this.interval = null;
 
@@ -120,7 +132,7 @@ UpdatesNotifier.prototype = {
     },
 
     _watch_dbus: function () {
-        this.bus_subscription = this.bus.signal_subscribe(
+        this.package_subscription = this.bus.signal_subscribe(
             'org.freedesktop.PackageKit',
             'org.freedesktop.PackageKit.Transaction',
             null,
@@ -150,10 +162,26 @@ UpdatesNotifier.prototype = {
                 }
             }
         );
+
+        this.update_changed_subscription = this.bus.signal_subscribe(
+            'org.freedesktop.PackageKit',
+            'org.freedesktop.PackageKit',
+            'UpdatesChanged',
+            '/org/freedesktop/PackageKit',
+            null,
+            Gio.DBusSignalFlags.NONE,
+            (_conn, _sender, _path, _iface, signal, params) => {
+                // refresh only list of packages, since this was external trigger
+                this._refreshUpdatesInfo(RefreshMode.PACKAGES);
+            }
+        );
     },
 
     _apply_applet_icon: function (icon_name) {
         let full_icon_name = icon_name + "-";
+        if (!this.hasError && (this.showFirmware && this.hasFirmwareUpdates)) {
+            full_icon_name += "fw-";
+        }
         if (this.icon_style == "dark") {
             full_icon_name += "dark";
         } else if (this.icon_style == "light") {
@@ -196,6 +224,20 @@ UpdatesNotifier.prototype = {
         if (!this.showWindowOnClick) {
             this._contentSection = new PopupMenu.PopupMenuSection();
             this.menu.addMenuItem(this._contentSection);
+        }
+
+        if (this.hasError) {
+            let iError = new PopupMenu.PopupIconMenuItem(_("View error details"), "dialog-error-symbolic", St.IconType.SYMBOLIC);
+            iError.connect('activate', () => {
+                Util.spawn_async(['/usr/bin/bash', this.applet_path + '/updates.sh', "error"]);
+            });
+
+            if (!this.showWindowOnClick) {
+                this.menu.addMenuItem(iError);
+            } else {
+                this._applet_context_menu.addMenuItem(iError, position);
+                this.rightMenuItemsIndexes.push(position++);
+            }
         }
 
         if (this.commandUpdateShow) {
@@ -251,6 +293,15 @@ UpdatesNotifier.prototype = {
     _update: function () {
         const count = this.updates.map.size;
 
+        if (this.hasError) {
+            this.set_applet_enabled(true);
+            this._apply_applet_icon('update-notifier-error');
+            this.set_applet_tooltip(_("Error checking for updates"));
+            this.hide_applet_label(true);
+            this._buildMenu(count);
+            return;
+        }
+
         this.set_applet_enabled(!this.hideApplet || count != 0);
         const tooltip = count > 0
             ? _("%s updates available").format(count.toString())
@@ -275,6 +326,14 @@ UpdatesNotifier.prototype = {
             }
         }
 
+        this.set_applet_label(`${count}`);
+        this.hide_applet_label(count === 0 || !this.show_label);
+
+        let fontWeight = `font-weight: ${this.labelFontWeight}`;
+        let fontSize = `font-size: ${this.labelFontSize}%`;
+        let margin = `margin-${this.labelVerticalPosition > 0 ? "top" : "bottom"}: ${Math.abs(this.labelVerticalPosition)}px`;
+        this._applet_label.set_style(`${fontWeight}; ${fontSize}; ${margin}`);
+
         this._buildMenu(count);
     },
 
@@ -296,40 +355,62 @@ UpdatesNotifier.prototype = {
         if (this.interval) {
             Util.clearInterval(this.interval);
         }
-        if (this.bus_subscription) {
-            this.bus.signal_unsubscribe(this.bus_subscription);
+        if (this.package_subscription) {
+            this.bus.signal_unsubscribe(this.package_subscription);
+        }
+        if (this.update_changed_subscription) {
+            this.bus.signal_unsubscribe(this.update_changed_subscription);
         }
     },
 
-    _refreshUpdatesInfo: function () {
+    _refreshUpdatesInfo: function (refreshMode = RefreshMode.UPDATES, force = false) {
         if (this.checkingInProgress) {
             return;
         }
+        if (!force && this.lastRefreshTime && ((GLib.get_monotonic_time() - this.lastRefreshTime) < 5 * GLib.USEC_PER_SEC)) {
+            global.log(`${UUID}: Skipping refresh, too frequent`);
+            return;
+        }
 
-        global.log(`${UUID}: Refreshing updates info...`);
-        this.set_applet_icon_name('configure');
+        global.log(`${UUID}: Refreshing ${refreshMode} info...`);
+        this.set_applet_icon_name('update-notifier-settings');
+        this.hide_applet_label(true);
         this.updates = new Updates();
+        this.hasError = false;
 
         // accept updates changes only when originating from this applet
         this.checkingInProgress = true;
-        Util.spawn_async(['/usr/bin/bash', this.applet_path + '/updates.sh', "check"], (stdout) => {
+        Util.spawn_async(['/usr/bin/bash', this.applet_path + '/updates.sh', "check", refreshMode], (stdout) => {
+            this.lastRefreshTime = GLib.get_monotonic_time();
+
+            if (stdout !== '') {
+                this.checkingInProgress = false;
+                global.logError(`${UUID}: pkcon get-updates failed`);
+                this.hasError = true;
+                this._update();
+                return;
+            }
+
             if (this.showFirmware) {
                 let fwCount = 0;
                 for (let line of stdout.trim().split("\n")) {
-                    global.log(`${UUID}: found firmware update: ${line}`);
                     const tokens = line.split('#');
                     if (tokens.length < 5) {
                         continue;
                     }
+                    global.log(`${UUID}: found firmware update: ${line}`);
                     const [name, deviceid, localVersion, version, description] = tokens.map(t => t.trim());
                     this.updates.addFirmware(name, deviceid, localVersion, version, description);
                     fwCount++;
                 }
+
                 global.log(`${UUID}: Firmware updates processing finished, updates found: ${fwCount}`);
-                if (fwCount > 0) {
-                    this._update();
+                this.hasFirmwareUpdates = fwCount > 0;
+
+                if (this.hasFirmwareUpdates) {
                     this._saveUpdatesToFile();
                 }
+                this._update();
             }
 
             this.checkingInProgress = false;

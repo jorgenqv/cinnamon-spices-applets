@@ -7,13 +7,27 @@ readonly DIR
 
 case "$1" in
 check)
-    pkcon refresh &>/dev/null
-    pkcon get-updates &>/dev/null
+    refreshMode=$2
+
+    if [[ "$refreshMode" = "updates" ]]; then
+        pkcon refresh &>/dev/null
+    fi
+
+    out=$(pkcon get-updates 2>&1)
+    exit_code=$?
+    if [[ $exit_code -ne 0 ]] && [[ $exit_code -ne 5 ]]; then
+        echo ERROR
+        echo "$out" > "$DIR/error"
+        exit 0
+    fi
+
     pkcon get-packages --filter installed &>/dev/null
 
     if command -v fwupdmgr &>/dev/null && command -v jq &>/dev/null; then
-        fwupdmgr refresh &>/dev/null
-        fwupdmgr get-updates --json 2>/dev/null | jq -r '
+        if [[ "$refreshMode" = "updates" ]]; then
+            fwupdmgr refresh &>/dev/null
+        fi
+        fwupdmgr get-updates --no-authenticate --json 2>/dev/null | jq -r '
             .Devices[]
             | select(.Releases | length > 0)
             | . as $d
@@ -27,16 +41,18 @@ check)
 view)
     /usr/bin/cjs "$DIR"/info-window.js "$DIR" "$DIR"/updates
     ;;
+error)
+    /usr/bin/cjs "$DIR"/error-window.js "$DIR"/error
+    ;;
 command)
     readonly cmd=$2
     if command -v gsettings &>/dev/null; then
         term=$(gsettings get org.cinnamon.desktop.default-applications.terminal exec | tr -d \')
         termarg=$(gsettings get org.cinnamon.desktop.default-applications.terminal exec-arg | tr -d \')
-        bash_cmd="echo \"Executing $cmd\"; $cmd; echo -en \"\nDone - press enter to exit\"; read"
         if [ -n "$term" ]; then
             args=("$term")
             [ -n "$termarg" ] && args+=("$termarg")
-            args+=("$bash_cmd")
+            args+=("/usr/bin/bash" "-c" "$cmd")
             "${args[@]}"
         fi
     fi

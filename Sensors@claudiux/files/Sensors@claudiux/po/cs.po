@@ -1,10 +1,10 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: Sensors@claudiux Czech 3.9.0\n"
+"Project-Id-Version: Sensors@claudiux Czech 5.8.2\n"
 "Report-Msgid-Bugs-To: https://github.com/linuxmint/cinnamon-spices-applets/"
 "issues\n"
-"POT-Creation-Date: 2025-03-30 14:17+0200\n"
-"PO-Revision-Date: 2025-01-08 19:22+0100\n"
+"POT-Creation-Date: 2026-02-16 00:47+0100\n"
+"PO-Revision-Date: 2025-09-14 13:25+0200\n"
 "Last-Translator: Bohuslav Kotál <fotobob1@centrum.cz>\n"
 "Language-Team: \n"
 "Language: cs_CZ\n"
@@ -16,126 +16,124 @@ msgstr ""
 "X-Poedit-Basepath: .\n"
 
 #. metadata.json->name
-#. applet.js:225 applet_OLD.js:235
+#. applet.js:228
 msgid "Sensors Monitor"
 msgstr "Sledování senzorů"
 
-#. applet.js:465 applet_OLD.js:418
+#. applet.js:503
 msgid "Suspended"
 msgstr "Zastaveno"
 
-#. applet.js:732 applet.js:773 applet_OLD.js:638 applet_OLD.js:682
+#. applet.js:819 applet.js:861
 msgid "high:"
 msgstr "vysoká:"
 
-#. applet.js:732 applet.js:735 applet.js:773 applet.js:775 applet.js:816
-#. applet_OLD.js:638 applet_OLD.js:642 applet_OLD.js:682 applet_OLD.js:684
-#. applet_OLD.js:726
+#. applet.js:819 applet.js:822 applet.js:861 applet.js:863 applet.js:904
 msgid "n/a"
 msgstr "n/a"
 
-#. applet.js:735 applet.js:775 applet_OLD.js:642 applet_OLD.js:684
+#. applet.js:822 applet.js:863
 msgid "crit:"
 msgstr "krit:"
 
-#. applet.js:816 applet.js:860 applet_OLD.js:726 applet_OLD.js:770
+#. applet.js:904 applet.js:948
 msgid "min:"
 msgstr "min:"
 
-#. applet.js:862 applet_OLD.js:772
+#. applet.js:950
 msgid "max:"
 msgstr "max:"
 
-#. applet.js:891 applet_OLD.js:801
+#. applet.js:979
 msgid "No intrusion detected"
 msgstr "Narušení nedetekováno"
 
-#. applet.js:891 applet_OLD.js:801
+#. applet.js:979
 msgid "INTRUSION DETECTED!"
 msgstr "DETEKOVÁNO NARUŠENÍ!"
 
-#. applet.js:911 applet_OLD.js:821
+#. applet.js:999
 msgid "Must be configured!"
 msgstr "Musí být nastaveno!"
 
-#. applet.js:1275 applet_OLD.js:1208
+#. applet.js:1368
 msgid "Settings"
 msgstr "Předvolby"
 
-#. applet.js:1275 applet_OLD.js:1208
+#. applet.js:1368
 msgid ":"
 msgstr ":"
 
 #. settings-schema.json->page_General->title
-#. applet.js:1282 applet_OLD.js:1215
+#. applet.js:1375
 msgid "⚙ General"
 msgstr "⚙ Obecné"
 
-#. applet.js:1298 applet_OLD.js:1231
+#. applet.js:1391
 #, javascript-format
 msgid "%s Temperature sensors"
 msgstr "%s Teplotní senzory"
 
-#. applet.js:1314 applet_OLD.js:1247
+#. applet.js:1407
 #, javascript-format
 msgid "%s Fan sensors"
 msgstr "%s Senzory větráků"
 
-#. applet.js:1330 applet_OLD.js:1263
+#. applet.js:1423
 #, javascript-format
 msgid "%s Voltage sensors"
 msgstr "%s Napěťové senzory"
 
-#. applet.js:1346 applet_OLD.js:1279
+#. applet.js:1439
 #, javascript-format
 msgid "%s Intrusion sensors"
 msgstr "%s Senzory narušení"
 
 #. settings-schema.json->xsensors->description
-#. applet.js:1365 applet_OLD.js:1306
+#. applet.js:1458
 msgid "Run xsensors"
 msgstr "Spustit xsensors"
 
-#. applet.js:1374 applet_OLD.js:1315
+#. applet.js:1467
 msgid "Suspend Sensors"
 msgstr "Pozastavit Sledování senzorů"
 
-#. applet.js:1385 applet_OLD.js:1326
+#. applet.js:1478
 msgid "Reload this applet"
 msgstr "Znovunačíst tento applet"
 
-#. applet.js:1707 applet_OLD.js:1656
+#. applet.js:1825
 #, javascript-format
 msgid "Are you sure you want to remove '%s'?"
 msgstr "Opravdu odstranit '%s'?"
 
-#. lib/checkDependencies.js:353
+#. lib/checkDependencies.js:369
 #, javascript-format
 msgid "The applet %s is fully functional."
 msgstr "Applet %s je plně funkční."
 
-#. lib/checkDependencies.js:354
+#. lib/checkDependencies.js:370
 msgid "All dependencies are installed"
 msgstr "Všechny závislosti jsou nainstalované"
 
-#. lib/checkDependencies.js:383
+#. lib/checkDependencies.js:399
 msgid ""
 "You appear to be missing some of the programs required for this applet to "
 "have all its features."
 msgstr ""
 "Zdá se, že chybí některé z programů vyžadovaných pro plnou funkčnost appletu."
 
-#. lib/checkDependencies.js:385
+#. lib/checkDependencies.js:401
 msgid "Please install these packages:"
-msgstr ""
+msgstr "Je nutné instalovat následující balíčky:"
 
-#. lib/checkDependencies.js:389 lib/checkDependencies.js:399
+#. lib/checkDependencies.js:405 lib/checkDependencies.js:415
 msgid "Some dependencies are not installed!"
 msgstr "Některé závislosti nejsou nainstalované!"
 
-#. lib/checkDependencies.js:401
+#. lib/checkDependencies.js:417
 msgid "Install these packages now"
-msgstr ""
+msgstr "Balíčky nainstalovat nyní"
 
 #. lib/util.js:244
 #, javascript-format
@@ -201,16 +199,15 @@ msgstr ""
 
 #. metadata.json->contributors
 msgid "claudiux: Author. JEleniel: support for NVidia video cards."
-msgstr ""
+msgstr "claudiux: Autor. JEleniel: podpora grafických karet NVidia."
 
 #. settings-schema.json->page_Temperatures->title
 msgid "⦿ Temperature"
 msgstr "⦿  Teploty"
 
 #. settings-schema.json->page_Fans->title
-#, fuzzy
 msgid "𖣘 Fan"
-msgstr "🤂 Větráky"
+msgstr "𖣘 Větráky"
 
 #. settings-schema.json->page_Voltages->title
 msgid "🗲 Voltage"
@@ -243,6 +240,10 @@ msgstr "Hodnoty senzorů"
 #. settings-schema.json->section_remove_incompatible_xlets->title
 msgid "Remove from panels certain applets that also use sensors"
 msgstr "Odstraňte z panelu jiné applety, rovněž sledující senzory počítače"
+
+#. settings-schema.json->section_dependencies->title
+msgid "Dependencies"
+msgstr ""
 
 #. settings-schema.json->section_tempDisktemp->title
 msgid "For the time being, disk temperature can only be read by root."
@@ -400,27 +401,27 @@ msgstr "Velikost písma (% standardní velikosti)"
 
 #. settings-schema.json->horizontal_width->description
 msgid "Display width (pixels) for horizontal panels"
-msgstr ""
+msgstr "Šířka zobrazení (v pixelech) pro horizontální panely"
 
 #. settings-schema.json->horizontal_width->tooltip
 msgid "0 means automatic. This value does not include border."
-msgstr ""
+msgstr "0 znamená automaticky. Hodnota nezahrnuje okraj."
 
 #. settings-schema.json->separator_type->options
 msgid "(none)"
-msgstr ""
+msgstr "(žádný)"
 
 #. settings-schema.json->separator_type->options
 msgid "blank"
-msgstr ""
+msgstr "prázdný"
 
 #. settings-schema.json->separator_type->options
 msgid "bar"
-msgstr ""
+msgstr "příčka"
 
 #. settings-schema.json->separator_type->description
 msgid "Separator"
-msgstr ""
+msgstr "Oddělovač"
 
 #. settings-schema.json->char_color_customized->description
 msgid "Customize Text Color"
@@ -431,18 +432,12 @@ msgid "Text Color"
 msgstr "Barva textu"
 
 #. settings-schema.json->crit_color->description
-#, fuzzy
 msgid "Critical Value Color"
-msgstr ""
-"Kritická\n"
-"hodnota"
+msgstr "Barva kritické hodnoty"
 
 #. settings-schema.json->high_color->description
-#, fuzzy
 msgid "High Value Color"
-msgstr ""
-"Vysoká\n"
-"hodnota"
+msgstr "Barva vysoké hodnoty"
 
 #. settings-schema.json->remove_border->description
 msgid "Remove border line"
@@ -454,7 +449,7 @@ msgstr "Určuje jestli údaje zobrazit s linkou kolem appletu či bez ní."
 
 #. settings-schema.json->remove_icons->description
 msgid "Remove icons"
-msgstr "Odstranit ikony"
+msgstr "Odebrat ikony"
 
 #. settings-schema.json->remove_icons->tooltip
 msgid "Whether or not to remove icons in panel."
@@ -492,6 +487,17 @@ msgstr "Zobrazovat v menu akci: Restartovat tento applet"
 msgid "Whether or not to display in menu the action: Restart this applet."
 msgstr "Možnost zobrazit položky 'Restartovat tento applet' v jeho menu."
 
+#. settings-schema.json->do_not_check_dependencies->description
+msgid "Do not check dependencies"
+msgstr ""
+
+#. settings-schema.json->do_not_check_dependencies->tooltip
+msgid ""
+"If you do not want to install certain dependencies (e.g., fonts), check this "
+"box. Be careful with dependencies that are necessary for this applet to "
+"function properly."
+msgstr ""
+
 #. settings-schema.json->make_disktemp_readable_by_user->description
 msgid "Make disk temperature user-readable"
 msgstr "Učinit hodnoty teploty disků čitelné uživatelem"
@@ -521,7 +527,7 @@ msgstr ""
 #. settings-schema.json->show_intrusion_name->description
 #. settings-schema.json->show_custom_name->description
 msgid "Display the 'Shown name' of each of these selected sensors"
-msgstr "Zobrazovat se hodnotami vybraných senzorů i 'Zobrazované jméno'"
+msgstr "Zobrazovat 'Zobrazované jméno' každého z vybraných senzorů"
 
 #. settings-schema.json->show_temp_name->tooltip
 #. settings-schema.json->show_fan_name->tooltip
@@ -535,14 +541,14 @@ msgstr ""
 
 #. settings-schema.json->chars_temp->tooltip
 msgid "The first emoji in this list is used for temperature"
-msgstr ""
+msgstr "První emodži v seznamu je použité pro teplotu"
 
 #. settings-schema.json->chars_temp->columns->title
 #. settings-schema.json->chars_fan->columns->title
 #. settings-schema.json->chars_volt->columns->title
 #. settings-schema.json->chars_intrusion->columns->title
 msgid "Emoji"
-msgstr ""
+msgstr "Emodži"
 
 #. settings-schema.json->strictly_positive_temp->description
 #. settings-schema.json->strictly_positive_volt->description
@@ -731,12 +737,11 @@ msgstr ""
 
 #. settings-schema.json->chars_fan->tooltip
 msgid "The first emoji in this list is used for fan"
-msgstr ""
+msgstr "První emodži v tomto seznamu je použité pro větrák"
 
 #. settings-schema.json->strictly_positive_fan->description
-#, fuzzy
 msgid "Show only positive or zero values"
-msgstr "Zobrazovat výhradně kladné hodnoty"
+msgstr "Zobrazovat výhradně nulu a kladné hodnoty"
 
 #. settings-schema.json->fan_unit->description
 msgid "Abbreviation of \"Rotations per minute\""
@@ -783,7 +788,7 @@ msgstr ""
 
 #. settings-schema.json->chars_volt->tooltip
 msgid "The first emoji in this list is used for voltage"
-msgstr ""
+msgstr "První emodži v seznamu je použité pro napětí"
 
 #. settings-schema.json->volt_unit->description
 msgid "Voltage unit"
@@ -859,7 +864,7 @@ msgstr ""
 
 #. settings-schema.json->chars_intrusion->tooltip
 msgid "The first emoji in this list is used for intrusion"
-msgstr ""
+msgstr "První emodži v seznamu je použité pro narušení"
 
 #. settings-schema.json->strictly_positive_intrusion->description
 msgid "Show in the panel only when an intrusion was detected"
